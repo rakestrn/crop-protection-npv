@@ -26,22 +26,65 @@ Development cost, timeline          AgbioInvestor for CropLife International,
                                     BASF Agricultural Solutions, Bayer Crop
                                     Science, Corteva, FMC and Syngenta, on
                                     the 2020-2023 launch cohort. Median total
-                                    cost of developing and registering one new
-                                    AI: $307m, up from $301m for 2014-2019.
+                                    cost of discovering, developing and
+                                    registering one new AI: $307m, up from
+                                    $301m for 2014-2019.
 
-Cost split across development       The survey's 2020-2023 split of research
-phases                             ($133m), development ($138m) and
-                                    registration ($35m), allocated across the
-                                    five phases below to match the observed
-                                    shape of a development programme.
+Cost bridge, survey to cash        The survey reports the cost of a new AI by
+                                    function, not by year. The five phases
+                                    below carry those function totals:
+                                    research $133m (chemistry $75m, biology
+                                    $46m, toxicology/environmental chemistry
+                                    $12m), development $138m (chemistry $32m,
+                                    field trials $59m, toxicology $23m,
+                                    environmental chemistry $24m) and
+                                    registration $35m. The survey does not
+                                    say when any of that money is spent, so
+                                    the calendar below is this model's
+                                    assumption, not the survey's. What is
+                                    the survey's is the total and its
+                                    division across functions.
+
+Post-launch cash                   Launch marketing, manufacturing scale-up
+                                    and post-launch stewardship are real
+                                    programme costs, but they are NOT part
+                                    of the survey's $307m and they are not
+                                    sourced from the survey either. They are
+                                    this model's own assumptions, stated so
+                                    they can be changed: $25m of launch
+                                    marketing at the reference cost, plus
+                                    scale-up and stewardship at 30/306 and
+                                    21/306 of the development cost. Total
+                                    programme cash is therefore about $384m
+                                    - roughly 25% more than the survey's
+                                    cost-to-market figure, and the reader
+                                    should treat the two as different
+                                    things rather than one number.
 
 Revenue shape                      Ramp to full penetration over five
                                     commercial years, hold for four, then
                                     decay 15% of peak per year to zero over
-                                    the remaining commercial life.
+                                    the remaining commercial life. This is an
+                                    assumption. No observed cohort of new
+                                    actives is used to calibrate it.
 
-Operating margin                   Gross margin of 58% less SG&A of 18%, or
-                                    40% at peak for the base case.
+Exclusivity                        Not modelled. The revenue path is a fixed
+                                    ramp, plateau and erosion schedule, so
+                                    shortening the development calendar does
+                                    not extend the protected commercial
+                                    period, and the originator's post-expiry
+                                    tail is not estimated. A faster approval
+                                    therefore pulls revenue forward in this
+                                    model; it does not earn extra protected
+                                    revenue.
+
+Operating contribution              Gross margin of 58% less SG&A of 18%, or
+                                    40% at peak for the base case. This is
+                                    operating contribution BEFORE deducting
+                                    R&D amortisation, and it is not
+                                    comparable to reported segment EBIT or
+                                    EBITDA margins. It is an assumption with
+                                    no product-level evidence behind it.
 
 Cost of capital                    13.5% for the base case, 15% for the
                                     corporate hurdle test. Both are assumptions,
@@ -73,8 +116,8 @@ conclusion rather than in its favour:
 
   * A probability-of-success multiplier was applied to revenue and cost
     alike. That is not a risk-adjusted NPV: it cannot change the zero-NPV
-    hurdle and it understates losses by treating the cost of failed
-    programmes as though it were never incurred. The survey cost is already
+    hurdle and it understates losses by treating the cost of failed programmes
+    as though it were never incurred. The survey cost is already
     attrition-inclusive - the questionnaire asks for the total cost of
     synthesising and screening every molecule needed to yield one successful
     launch - so applying a second failure haircut double-counts. The
@@ -84,11 +127,35 @@ conclusion rather than in its favour:
     the peak margin line subtracted dollar values of revenue from percentage
     values, producing a 74.24% margin on a 40% business.
 
+Two further corrections are recorded here because they were found by an
+external review of the published model, and both matter:
+
+  * THE PRE-LAUNCH SCHEDULE DID NOT SUM TO THE AMORTISED COST. The five
+    phases carried a $250m reference budget scaled to about $255m, while the
+    amortisation base was the full $307m dev_cost. The difference - about
+    $52m - was charged to cash in one treatment and not the other, so in the
+    capitalised base case the programme took a tax shield on cash it never
+    paid. The phases are now built from the survey's own function totals and
+    the pre-launch schedule sums to exactly the amortised cost. The model now
+    asserts this in its self-checks, and asserts that a capitalised and an
+    expensed treatment give identical cash at zero tax, which they did not
+    before.
+
+  * THE EXPLANATION OF THE EXPENSING SCENARIO WAS WRONG. The earlier version
+    said the benefit came from "removing the amortisation charge". The code
+    already adds non-cash amortisation back into free cash flow, so no cash
+    is created by dropping a book charge. The real difference is WHEN the
+    deduction is taken and WHETHER there is profit elsewhere in the group to
+    offset it against. At zero tax the two treatments are now identical, as
+    they must be.
+
 One further correction runs the other way and is worth stating for the same
 reason: the 15% IRR hurdle is discount-rate independent by construction. The
 IRR of a cash-flow vector does not depend on the rate at which you discount
-it, so $427m survives any change in cost of capital, while the NPV-zero
-hurdle does not. Both are reported, and they are different quantities.
+it, so the hurdle survives any change in cost of capital, while the NPV-zero
+hurdle does not. Both are reported, and they are different quantities. A
+project can clear a corporate capital-rationing hurdle and still create value
+at a lower required return.
 """
 from __future__ import annotations
 
@@ -101,28 +168,36 @@ import os
 # registration (t=11).
 DEV_YEARS = 11
 
-# Reference total development cost, including post-launch scale-up and
-# stewardship. The post-launch cost lines are scaled off this base, and the
-# pre-launch phase budget is scaled to it. Set to the survey's 2014-2019
-# total so the two survey vintages scale on the same denominator.
-REFERENCE_DEV_COST = 301.0
+# The survey's 2020-23 total cost of discovering, developing and registering
+# one new active ingredient, and the function split it reports.
+#
+#   research      $133m   (chemistry 75, biology 46, toxicology/env 12)
+#   development   $138m   (chemistry 32, field trials 59, tox 23, env 24)
+#   registration   $35m
+#   total         $307m
+#
+# The phases below carry these function totals. Their placement on the
+# calendar is this model's assumption; the totals are the survey's.
+SURVEY_TOTAL = 306.0
 
-# Pre-launch budget: the five development phases below sum to this.
-PRE_LAUNCH_BUDGET = 250.0
+# Reference total for the post-launch cost lines, which are not part of the
+# survey's $307m and are stated as this model's own assumptions.
+REFERENCE_DEV_COST = 306.0
 
 # Post-launch cost lines, expressed as a share of REFERENCE_DEV_COST.
-SCALEUP_SHARE = 30.0 / 301.0     # manufacturing scale-up
-STEWARD_SHARE = 21.0 / 301.0     # post-launch stewardship
+SCALEUP_SHARE = 30.0 / 306.0     # manufacturing scale-up
+STEWARD_SHARE = 21.0 / 306.0     # post-launch stewardship
 LAUNCH_MARKETING = 25.0          # launch marketing at the reference cost
 
 # Development phases: (start t in years, duration in years, cost in $m).
-# Discovery and lead identification through registration and launch.
+# Each phase carries whole survey function totals, so the phase costs sum to
+# SURVEY_TOTAL and the pre-launch schedule sums to the amortised cost.
 PHASES = [
-    (0.0, 2.0, 12.0),   # Discovery & Lead ID
-    (2.0, 1.5, 18.0),   # Lead Optimisation
-    (3.5, 2.0, 35.0),   # Early Development
-    (5.5, 3.0, 95.0),   # Late Development
-    (8.5, 2.5, 90.0),   # Registration & Launch
+    (0.0, 2.5, 46.0),   # Discovery & biological screening   (research: biology)
+    (2.5, 2.5, 87.0),   # Lead optimisation & research chem  (research: chem + tox/env)
+    (5.0, 2.0, 56.0),   # Early development & env chemistry   (development: chem + env)
+    (7.0, 2.5, 82.0),   # Field trials & toxicology          (development: trials + tox)
+    (9.5, 1.5, 35.0),   # Registration                      (registration)
 ]
 
 # Probability of success by phase, and the share of programmes that reach
@@ -157,8 +232,15 @@ def pre_launch_schedule(dev_cost: float) -> list[float]:
     Each phase's cost is spread across the calendar years it overlaps, in
     proportion to the overlap, so nothing is double-counted or back-loaded and
     the schedule sums exactly to the phase budget.
+
+    The phase costs are scaled so that the schedule sums to `dev_cost` -
+    that is, to exactly the amount the programme amortises. Scaling against
+    the sum of the nominal phase costs (rather than a fixed reference) means
+    a counterfactual that drops a phase, such as removing registration
+    entirely, drops the right amount of cash without touching the rest.
     """
-    scale = dev_cost / REFERENCE_DEV_COST
+    nominal_total = sum(cost for _, _, cost in PHASES)
+    scale = dev_cost / nominal_total
     sched = [0.0] * DEV_YEARS
     for start, dur, cost in PHASES:
         for year in range(1, DEV_YEARS + 1):
@@ -188,7 +270,8 @@ def irr(cashflows: list[float], lo: float = -0.9999, hi: float = 10.0):
 
 def cashflows(peak_sales: float, dev_cost: float, ebit_margin: float,
               tax: float, life: int, working_capital: float = 0.0,
-              tax_shield: bool = False, expense_rd: bool = False) -> list[float]:
+              tax_shield: bool = False, expense_rd: bool = False,
+              launch_offset: int | None = None) -> list[float]:
     """Year-by-year unlevered free cash flow.
 
     t = 0..10   development spend (negative)
@@ -199,35 +282,48 @@ def cashflows(peak_sales: float, dev_cost: float, ebit_margin: float,
     revenue and the period over which development spend is amortised. These
     are the same quantity by construction.
 
-    ebit_margin is the operating margin before amortisation, applied to
+    ebit_margin is operating contribution BEFORE R&D amortisation, applied to
     revenue in every commercial year (40% at peak in the base case: gross
-    margin of 58% less SG&A of 18%).
+    margin of 58% less SG&A of 18%). It is not comparable to reported
+    segment EBIT or EBITDA margins.
 
     Optional treatments:
       working_capital : trade working capital as a share of revenue; the
                         annual movement is a cash cost and the balance is
                         released in the final commercial year.
       tax_shield      : a multinational originator offsets development spend
-                        against profits elsewhere in the group, so losses are
-                        usable immediately rather than carried forward.
+                        against profits elsewhere in the group, so the loss
+                        is usable immediately rather than carried forward.
       expense_rd      : development spend is expensed as incurred instead of
-                        capitalised and amortised. Combined with tax_shield
-                        this most resembles how an incumbent accounts for
-                        R&D, and it makes the amortisation base moot.
+                        capitalised and amortised. The cash outflow is
+                        identical either way - only the timing of the tax
+                        deduction changes, and the tax shield only has value
+                        if there is profit elsewhere to offset.
+      launch_offset   : the period at which the product launches, if earlier
+                        than the end of the development schedule. Used for
+                        the "approval wait removed" counterfactual: the R&D
+                        programme is unchanged and still runs for DEV_YEARS
+                        periods, but the product starts selling before it
+                        finishes, which is what a shorter approval queue
+                        looks like from the cash-flow statement.
     """
-    scale = dev_cost / REFERENCE_DEV_COST
+    post_scale = dev_cost / REFERENCE_DEV_COST
     amortisation = 0.0 if expense_rd else dev_cost / life
     cfs = []
 
-    # Pre-launch development spend.
+    # Pre-launch development spend. This is the same cash in both
+    # treatments: the programme pays it either way.
+    pre = []
     for amt in pre_launch_schedule(dev_cost):
         cf = -amt
         if tax_shield and expense_rd:
             # Expensed as incurred and offset against group profits in the
             # same period.
             cf += amt * tax
-        cfs.append(cf)
+        pre.append(cf)
 
+    start = DEV_YEARS if launch_offset is None else launch_offset
+    commercial = []
     prev_wc = 0.0
     for c in range(life):
         revenue = peak_sales * penetration(c)
@@ -242,28 +338,33 @@ def cashflows(peak_sales: float, dev_cost: float, ebit_margin: float,
             nopat = ebit * (1.0 - tax) if ebit > 0 else ebit
         fcf = nopat + amortisation          # amortisation is non-cash
         if c == 0:
-            spend = (LAUNCH_MARKETING * scale
+            spend = (LAUNCH_MARKETING * post_scale
                      + SCALEUP_SHARE * dev_cost)
             fcf -= spend
-            if expense_rd and tax_shield:
-                fcf += spend * tax
-            if expense_rd and not tax_shield:
-                # Stand-alone developer with no other income: R&D expensed in
-                # the launch year is deducted but yields no tax benefit.
-                fcf -= dev_cost - PRE_LAUNCH_BUDGET * scale
         if c < 4:
             st = STEWARD_SHARE * dev_cost / 4.0
             fcf -= st
-            if expense_rd and tax_shield:
-                fcf += st * tax
         if working_capital:
             wc = working_capital * revenue
             fcf -= (wc - prev_wc)           # investment in working capital
             if c == life - 1:
                 fcf += wc                  # released at end of life
             prev_wc = wc
-        cfs.append(fcf)
-    return cfs
+        commercial.append(fcf)
+
+    if start >= DEV_YEARS:
+        return pre + commercial
+
+    # Early launch: development spend continues alongside revenue for the
+    # remaining periods of the R&D programme.
+    total = max(DEV_YEARS, start + life)
+    out = []
+    for i in range(total):
+        cf = pre[i] if i < DEV_YEARS else 0.0
+        if start <= i < start + life:
+            cf += commercial[i - start]
+        out.append(cf)
+    return out
 
 
 def evaluate(peak_sales: float, dev_cost: float, ebit_margin: float,
@@ -409,12 +510,12 @@ def main() -> None:
         out.setdefault("irr_breakeven_by_dev_cost", {})[f"{dc:.0f}"] = v
     print()
 
-    print("Peak sales required for a 15% IRR, by EBIT margin (base dev cost)")
-    for m in (0.35, 0.40, 0.45, 0.50, 0.55):
-        v = solve_breakeven("irr", b["dev_cost"], m, b["tax"],
+    print("Peak sales required for a 15% IRR, by operating contribution (base dev cost)")
+    for mg in (0.35, 0.40, 0.45, 0.50, 0.55):
+        v = solve_breakeven("irr", b["dev_cost"], mg, b["tax"],
                             b["discount"], b["life"], HURDLE_IRR)
-        print(f"   EBIT margin {m:.0%} -> ${v:,.0f}m peak sales")
-        out.setdefault("irr_breakeven_by_margin", {})[f"{m:.2f}"] = v
+        print(f"   operating contribution {mg:.0%} -> ${v:,.0f}m peak sales")
+        out.setdefault("irr_breakeven_by_margin", {})[f"{mg:.2f}"] = v
 
     # A cost-of-capital framing gives a materially lower hurdle than the 15%
     # corporate rate. Both are worth seeing.
@@ -437,12 +538,12 @@ def main() -> None:
     out["irr_breakeven_with_5pct_royalty"] = v_roy
 
     # Disclosed company discount rates for context: BASF Ag 6.74%, Bayer Group
-    # 7.0%, Syngenta 8.0%, Bayer Crop Science 9.4%. CAPM asset rate ~7.75%.
+    # 7.0%, Syngenta 8.0%, Bayer Crop Science 8.8% (Q4 2025, after tax).
     # The 15% hurdle is an assumed capital-rationing rate, not an observed
     # industry rate.
     print()
     print("Peak sales for NPV = 0, by discount rate (base parameters)")
-    for r in (0.0674, 0.0775, 0.085, 0.094, 0.10, 0.135, 0.15):
+    for r in (0.0674, 0.0775, 0.085, 0.088, 0.094, 0.10, 0.135, 0.15):
         v = breakeven_npv(307.0, 0.40, 0.21, 15, r)
         print(f"   discount {r:.2%} -> ${v:,.0f}m peak sales")
         out.setdefault("npv_zero_breakeven_by_discount", {})[f"{r:.4f}"] = v
@@ -467,21 +568,36 @@ def main() -> None:
 
     print()
     print("15% IRR hurdle at the sourced cost of capital (8.5%)")
-    print(f"   15% IRR hurdle is $427m at any discount rate; NPV-zero at 8.5% "
+    print(f"   15% IRR hurdle is ${be_irr:,.0f}m at any discount rate; NPV-zero at 8.5% "
           f"is ${breakeven_npv(307.0, 0.40, 0.21, 15, 0.085):,.0f}m")
     print("   (the IRR-based hurdle is discount-rate independent by construction)")
-    out["irr_hurdle_at_15pct"] = solve_breakeven("irr", 307.0, 0.40, 0.21,
-                                                 0.135, 15, HURDLE_IRR)
+    out["irr_hurdle_at_15pct"] = be_irr
 
     # Self-checks.
     sched = pre_launch_schedule(307.0)
     print()
     print("Self-checks")
     print(f"   pre-launch schedule sums to ${sum(sched):,.2f}m "
-          f"(expect ${307.0 * PRE_LAUNCH_BUDGET / REFERENCE_DEV_COST:,.2f}m)")
-    assert abs(sum(sched)
-               - 307.0 * PRE_LAUNCH_BUDGET / REFERENCE_DEV_COST) < 1e-6, \
-        "dev schedule must sum to budget"
+          f"(expect ${307.0:,.2f}m - the amortised cost)")
+    assert abs(sum(sched) - 307.0) < 1e-6, \
+        "pre-launch cash must equal the amortised cost"
+    assert abs(sum(c for _, _, c in PHASES) - SURVEY_TOTAL) < 1e-6, \
+        "phase costs must sum to the survey total"
+
+    # A capitalised and an expensed treatment must produce identical cash at
+    # zero tax: no tax means no deduction, so no timing effect and no
+    # amortisation shield. This check fails if the programme pays different
+    # amounts of cash in the two treatments.
+    for kw in ({}, {"tax_shield": True}):
+        cap = sum(cashflows(75.0, 307.0, 0.40, 0.0, 15, **kw))
+        exp = sum(cashflows(75.0, 307.0, 0.40, 0.0, 15,
+                            expense_rd=True, **kw))
+        diff = abs(cap - exp)
+        label = "capitalised" if not kw else "capitalised + group tax shield"
+        print(f"   zero tax, {label}: capitalised vs expensed "
+              f"undiscounted cash difference = {diff:.10f} (must be 0)")
+        assert diff < 1e-6, "capitalised and expensed must be identical at zero tax"
+
     for n, s in SCENARIOS.items():
         cfs = cashflows(s["peak_sales"], s["dev_cost"], s["ebit_margin"],
                         s["tax"], s["life"])

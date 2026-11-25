@@ -1,34 +1,41 @@
 {
   "structures": {
     "baseline (as published)": {
-      "npv_zero_at_0.085": 230.29804288498957,
-      "npv_zero_at_0.135": 372.12040244605464,
-      "npv_zero_at_0.150": 427.24793489231877,
-      "irr_15pct_hurdle": 427.24793489231877
+      "npv_zero_at_0.085": 301.36227513136294,
+      "npv_zero_at_0.135": 518.3320091481407,
+      "npv_zero_at_0.150": 606.2822390276931,
+      "irr_15pct_hurdle": 606.2822390276931
     },
     "free registration": {
-      "npv_zero_at_0.085": 204.0425656831178,
-      "npv_zero_at_0.135": 329.696252330055,
-      "npv_zero_at_0.150": 378.53888694042575,
-      "irr_15pct_hurdle": 378.53888694042575
+      "npv_zero_at_0.085": 267.0050124942369,
+      "npv_zero_at_0.135": 459.2387833494928,
+      "npv_zero_at_0.150": 537.1621140571092,
+      "irr_15pct_hurdle": 537.1621140571092
     },
-    "fast lead time 8.3y": {
-      "npv_zero_at_0.085": 223.4117713651546,
-      "npv_zero_at_0.135": 351.6532171188553,
-      "npv_zero_at_0.150": 400.1661259035392,
-      "irr_15pct_hurdle": 400.1661259035392
+    "approval wait removed": {
+      "npv_zero_at_0.085": 240.49112761997026,
+      "npv_zero_at_0.135": 364.160145649814,
+      "npv_zero_at_0.150": 410.17141769154296,
+      "irr_15pct_hurdle": 410.17141769154296
     },
-    "full deregulation": {
-      "npv_zero_at_0.085": 197.94137397824773,
-      "npv_zero_at_0.135": 311.56245946686863,
-      "npv_zero_at_0.150": 354.5445806050901,
-      "irr_15pct_hurdle": 354.5445806050901
+    "1995-speed calendar": {
+      "npv_zero_at_0.085": 284.56387950000976,
+      "npv_zero_at_0.135": 469.2855761865237,
+      "npv_zero_at_0.150": 541.399478153242,
+      "irr_15pct_hurdle": 541.399478153242
+    },
+    "both": {
+      "npv_zero_at_0.085": 252.12174340066008,
+      "npv_zero_at_0.135": 415.783963266236,
+      "npv_zero_at_0.150": 479.67641061134134,
+      "irr_15pct_hurdle": 479.67641061134134
     }
   },
   "cohort_mean": 48.6,
   "cohort_implied_peak": 121.5,
-  "gap_closure_vs_revenue": 0.19200779295918857,
-  "gap_closure_vs_implied_peak": 0.23778853751811607,
+  "gap_closure_vs_revenue": 0.22702144618606876,
+  "gap_closure_vs_implied_peak": 0.26116020395111755,
+  "baseline_total_cash_outflow": 383.248366013072,
   "rates": [
     0.085,
     0.135,

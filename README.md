@@ -1,143 +1,176 @@
-# What a new crop-protection active ingredient is worth
+# Crop protection NPV model
 
-A financial model of a single new active substance (AI), built to answer one
-question: **what peak annual sales does a new AI have to reach before it clears
-a normal corporate hurdle rate?**
+The cash-flow model behind **"Driving Innovation in Crop Protection: The 7 Percent Problem"**.
 
-The headline result: on the central case, a new AI needs **$427 million** of
-peak annual sales to clear a 15% IRR, and **$372 million** to break even on
-NPV at a 13.5% discount rate. A narrow active ingredient is worth roughly
-nothing; only a globally scaled product clears the bar.
+The question it answers: **what would a new active ingredient have had to earn to
+justify a full originator development programme** — and what share of the crop
+protection market does that represent?
 
 The model is deliberately plain. Every input is stated, every assumption is
 named, and the breakeven solves are visible in the code rather than buried in a
 formula. If you disagree with an assumption, change it and see what it does to
 the answer.
 
+Everything runs on the Python standard library. No dependencies, no data files,
+no workbook.
+
+```bash
+python3 crop_protection_npv.py            # base model
+python3 regulation_test.py                # five regulatory counterfactuals
+python3 alternative_construction.py       # an independent second construction
+```
+
+Each script writes a JSON file next to itself with the results, so the numbers
+in the article can be checked without reading the code.
+
 This is the model behind [Driving Innovation in Crop Protection: The 7 Percent
 Problem](https://blog.ryanrakestraw.com/driving-innovation-in-crop-protection-the-7-percent-problem/).
 
-## Running it
+---
 
-```
-python3 crop_protection_npv.py     # base model
-python3 regulation_test.py         # regulatory counterfactuals
-```
+## The headline numbers
 
-No dependencies beyond the Python standard library (tested on Python 3.9+).
-Each script writes a JSON file of results alongside itself.
+All figures are **peak annual sales in $ millions** for a single new active
+ingredient with a 15-year commercial life.
 
-## What the model does
+| | Peak sales needed |
+|---|---:|
+| NPV = 0 at a 13.5% discount rate | **$518m** |
+| NPV = 0 at an 8.5% discount rate | $301m |
+| 15% IRR hurdle | **$606m** |
+| 15% IRR hurdle, alternative construction | $696m |
 
-Year-by-year unlevered free cash flow for one new active substance:
+Two different numbers, and they are not interchangeable:
 
-| Period | Content |
-|---|---|
-| Years 0–10 | Development spend across five phases, spread over the calendar years each phase overlaps |
-| Year 11 | Launch year — launch marketing, manufacturing scale-up, first revenue |
-| Years 12+ | Commercial years: revenue ramp, tax, amortisation, working capital, stewardship |
+- The **NPV-zero hurdle** depends on the discount rate.
+- The **15% IRR hurdle** does not, because the IRR of a cash-flow vector does not
+  depend on the rate at which you discount it.
 
-It solves for the **peak sales** at which NPV hits zero and at which IRR hits
-15%, and it prints those hurdles across a range of discount rates, development
-costs, operating margins and cost-structure treatments so you can see how much
-each assumption moves the answer.
+The 8.5% rate is **author-selected**, not a market rate. No source publishes it.
+It is used as a deliberately low case: a hurdle below what any disclosed cost of
+capital supports would flatter the conclusion the article argues against itself.
 
-## Inputs
+## The five counterfactuals
 
-| Input | Value | Source |
+`regulation_test.py` holds the $307m cost base and the revenue path fixed and
+removes one regulatory channel at a time.
+
+| Structure | NPV=0 @ 8.5% | NPV=0 @ 13.5% | 15% IRR hurdle |
+|---|---:|---:|---:|
+| Baseline (as published) | $301m | $518m | $606m |
+| Free registration | $267m | $459m | $537m |
+| Approval wait removed, R&D programme unchanged | $240m | $364m | $410m |
+| 1995-speed development calendar | $285m | $469m | $541m |
+| Both changes together | $252m | $416m | $480m |
+
+Two things this test is careful about:
+
+- **Removing the approval wait does not cancel the R&D programme.** The money
+  spent before approval is still spent. The counterfactual starts revenue
+  earlier and leaves the cost schedule alone.
+- **This is not deregulation.** It removes one cost category and one calendar.
+  It does not remove the regulatory constraint, and the article says so.
+
+Against the ten active ingredients launched in 2010 — $48.6m average realised
+2022 revenue, and about $121.5m implied peak on the model's own revenue path —
+removing both channels closes **23%** of the gap to realised revenue and **26%**
+of the gap to implied peak.
+
+## The alternative construction
+
+`alternative_construction.py` is a genuinely different model, not a
+re-parameterisation of the same one. Same $307m cost base; different structure:
+
+| Assumption | Published model | Alternative |
 |---|---|---|
-| Total cost to develop and register one new AI | $307m | AgbioInvestor for CropLife International, *Time and Cost of New Agrochemical Product Discovery, Development and Registration* (May 2026) |
-| Cost split | Research $133m, Development $138m, Registration $35m | Same study, 2020–2023 cohort |
-| Development timeline | 11 years, five phases | Same study, allocated to phases |
-| Revenue shape | 5-year ramp to full penetration, 4 years at peak, then −15% of peak per year | Assumed |
-| Operating margin | 40% at peak (58% gross margin less 18% SG&A) | Assumed |
-| Commercial life | 15 years base (18 bull, 10 bear); development spend amortised over the same period | Assumed |
-| Cost of capital | 13.5% base, 15% corporate hurdle | Assumed — see below |
+| Operating contribution | 40% | 35% |
+| Commercial life | 15 years | 10 years |
+| Post-peak erosion | 15% a year | 25% a year |
+| Tax | 21% | 25% |
+| Separate post-launch cost lines | yes | no |
+
+It produces a hurdle of **$696m** against **$606m** — a $90m spread from
+assumption choices alone. That spread is the point. A single model construction
+is not a measurement of an industry.
+
+## How the cost base is built
+
+The pre-launch cost is the **AgbioInvestor 2026** development-cost survey, used
+at the level of its own functional totals rather than apportioned by phase:
+
+| | |
+|---|---:|
+| Research | $133m |
+| Development | $138m |
+| Registration | $35m |
+| **Total** | **$307m** |
 
 The survey is of BASF Agricultural Solutions, Bayer Crop Science, Corteva, FMC
 and Syngenta, on the 2020–2023 launch cohort.
 
-## Two hurdles, and why they differ
+## Other stated assumptions
 
-The model reports two different numbers, and they are not interchangeable:
+| Input | Value |
+|---|---|
+| Development timeline | 11 years, five phases |
+| Revenue shape | 5-year ramp to full penetration, 4 years at peak, then −15% of peak per year |
+| Operating margin | 40% at peak (58% gross margin less 18% SG&A) |
+| Commercial life | 15 years base (18 bull, 10 bear) |
+| Cost of capital | 13.5% base, 15% corporate hurdle, 8.5% low case (author-selected) |
 
-- **NPV = 0 hurdle** — depends on the discount rate. $372m at 13.5%, $230m at
-  8.5%.
-- **15% IRR hurdle** — $427m, and **independent of the discount rate**,
-  because the IRR of a cash-flow vector does not depend on the rate at which
-  you discount it.
+## Two checks worth running
 
-Both are reported throughout. Conflating them is the most common way a
-hurdle number gets quoted wrongly.
+The model asserts two identities that a spreadsheet version of this would have
+failed:
 
-The 15% hurdle is an *assumed* capital-rationing rate, not an observed industry
-rate. Disclosed company discount rates for context are lower (BASF Ag 6.74%,
-Bayer Group 7.0%, Syngenta 8.0%, Bayer Crop Science 9.4%; CAPM asset rate
-~7.75%), and the model prints the NPV-zero hurdle at each of them. A
-cost-of-capital framing gives a materially lower hurdle — the strongest
-counter-argument to the thesis, and it is in the output rather than suppressed.
+1. **The zero-tax identity.** At zero tax, a capitalised development cost and an
+   expensed one must produce identical cash-flow NPVs. Amortisation is an
+   accounting treatment, not a cash event. An earlier version of this model
+   broke this test by $12.9m, because it took a tax shield on cash it never
+   paid.
 
-## The regulatory counterfactuals
+2. **The full-cash check.** The model pays the whole $307m as cash before
+   launch. An earlier version amortised about $52m of development cost without
+   ever paying it, which understated the hurdle by roughly $180m.
 
-`regulation_test.py` asks whether the hurdle depends on the regulatory regime
-or is set by the economics alone. It compares four structures:
+Both are enforced in code, so the script fails loudly rather than printing a
+number nobody checked.
 
-| Structure | 15% IRR hurdle | vs $48.6m realised | vs $121.5m implied peak |
-|---|---|---|---|
-| Baseline, as published | $427m | 8.8× | 3.5× |
-| Free registration ($35m removed) | $379m | 7.8× | 3.1× |
-| Fast lead time (8.3-year calendar) | $400m | 8.2× | 3.3× |
-| Full deregulation | $355m | 7.3× | 2.9× |
-
-Full deregulation closes **19%** of the distance between the $427m hurdle and
-the $48.6m that the average active ingredient launched in 2010 actually earned.
-Registration is a real tax on the returns of innovation. It is not the binding
-constraint.
-
-Two columns, because the comparison needs one. The hurdle is a **peak-sales**
-number; $48.6m is what those ten products earned in **2022**, a single late year
-rather than their peak. Applying this model's own average revenue path to the
-cohort gives implied peak sales of about **$121.5m**, and on that like-for-like
-basis the baseline hurdle is 3.5× rather than 8.8×, and full deregulation
-closes **24%** of the gap rather than 19%. The conclusion holds either way; the
-multiple does not survive unchanged.
-
-The script prints two sanity checks before the results: how much cash each
-counterfactual actually removes, and whether any pre-launch spend is dropped by
-truncation. Both are worth reading — an earlier version of this test failed
+`regulation_test.py` also prints, before its results, how much cash each
+counterfactual actually removes and whether any pre-launch spend is dropped by
+truncation. Both are worth reading — an earlier version of that test failed
 both, in the direction that flattered the conclusion.
 
 ## Corrections
 
-An earlier version of this model produced numbers that could not be quoted.
-The corrections that matter all moved the result **against** the conclusion
-rather than in its favour:
+An earlier version of this model produced numbers that could not be quoted. The
+corrections that mattered all moved the result **against** the conclusion rather
+than in its favour:
 
-- The commercial-year loop ran one period too long, so the bear case earned
-  revenue in eleven commercial years against a ten-year amortisation life.
-  Corrected bear NPV: −$120.5m at −1.58% IRR (was −$118.2m at −0.49%).
-- Phase start times were read off year labels and used as elapsed time from
-  discovery start, so every phase sat a year late and the final phase was
-  truncated at the horizon, dropping $36m of the $250m pre-launch budget.
+- The pre-launch cost schedule did not reproduce the survey's own functional
+  split. Research and development were scaled to about $31m against the
+  survey's $133m research cost.
+- Development cost was capitalised and amortised without the corresponding cash
+  ever being paid, and a tax shield was taken on it. The zero-tax identity above
+  is what exposed this.
+- Phase start times were read off year labels rather than elapsed time from
+  discovery start, so phases sat a year late and the last phase was truncated at
+  the horizon, dropping $24m of the pre-launch budget.
 - Tax was applied to revenue rather than to EBIT, and the free-cash-flow factor
   was applied to peak EBIT rather than to NOPAT.
 - A probability-of-success multiplier was applied to revenue and cost alike.
-  That is not a risk-adjusted NPV: it cannot change the zero-NPV hurdle and it
+  That is not a risk-adjusted NPV: it cannot change the zero-NPV hurdle, and it
   understates losses by treating the cost of failed programmes as though it
-  were never incurred. The survey cost is already attrition-inclusive — the
-  questionnaire asks for the total cost of synthesising and screening every
-  molecule needed to yield one successful launch — so a second failure haircut
-  double-counts. Those rows are retained, labelled as diagnostics.
+  were never incurred. The survey cost is already attrition-inclusive, so a
+  second failure haircut double-counts. Those rows are retained, labelled as
+  diagnostics.
 - "Effective IP protection" was a circular reference to its own cell, and the
   peak margin line subtracted dollar values of revenue from percentage values,
   producing a 74.24% margin on a 40% business.
+- The regulatory calendar counterfactual was described as removing 3.1 years of
+  delay. It moved first revenue by two years, from year 11 to year 9.
 
-One further correction runs the other way and is worth stating for the same
-reason: the 15% IRR hurdle is discount-rate independent by construction, so
-$427m survives any change in cost of capital while the NPV-zero hurdle does
-not. Both are reported, and they are different quantities.
-
-## What this model is not
+## What this model does not do
 
 It is a single-product model, not a portfolio model. It does not attempt
 risk-adjusted NPV in the stage-gated (rNPV) sense, because that requires
@@ -145,12 +178,36 @@ calibrating phase-by-phase probabilities, which the published survey does not
 support. It uses one average development programme, not a distribution of
 programmes, and it says so.
 
-The $48.6m cohort figure it is compared against is what the ten active
-ingredients launched in 2010 earned in 2022 — revenue in a single late year,
-twelve years after launch, not peak annual sales. Their peak years were
-higher, so on a strictly like-for-like basis the gap to the hurdle is smaller
-than the headline multiple: on this model's own revenue path their implied peak
-is about $121m, which puts the baseline hurdle at 3.5× rather than 8.8×.
+It also does not claim that most launches fail, or that regulation is the cause
+of weak innovation economics. The 2010 cohort is ten products with a single
+2022 revenue observation each; it is not a representative matched cohort, and
+one member had its EU approval withdrawn. The model produces a hurdle under
+stated assumptions. Comparing that hurdle to realised outcomes is the reader's
+step, and the article is explicit about what the comparison can and cannot
+support.
+
+## Files
+
+| File | What it does |
+|---|---|
+| `crop_protection_npv.py` | Base model: cash flows, NPV, IRR, sensitivity tables |
+| `regulation_test.py` | The five counterfactual structures above |
+| `alternative_construction.py` | The independent second construction |
+| `crop_protection_npv_model_results.json` | Output of the base model |
+| `crop_protection_npv_regulation_test_results.json` | Output of the counterfactual test |
+| `alternative_construction_results.json` | Output of the alternative construction |
+
+## Reproducing the published numbers
+
+```bash
+git clone https://github.com/rakestrn/crop-protection-npv.git
+cd crop-protection-npv
+python3 crop_protection_npv.py && python3 regulation_test.py && python3 alternative_construction.py
+```
+
+The JSON files in this repository were generated by these scripts from the
+committed sources. If your run produces different numbers, that is a real
+discrepancy and worth reporting.
 
 ## Source
 

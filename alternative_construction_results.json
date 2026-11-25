@@ -1,0 +1,15 @@
+{
+  "alternative_15pct_irr_hurdle": 696.3551388721155,
+  "published_model_15pct_irr_hurdle": 606.2822390276931,
+  "spread": -90.07289984442241,
+  "assumptions": {
+    "dev_cost": 307.0,
+    "operating_contribution": 0.35,
+    "commercial_life": 10,
+    "tax": 0.25,
+    "post_peak_erosion": 0.25,
+    "separate_post_launch_cost_lines": false
+  },
+  "cohort_mean": 48.6,
+  "cohort_implied_peak": 121.5
+}
