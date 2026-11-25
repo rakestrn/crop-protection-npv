@@ -7,9 +7,9 @@ built to answer one question: what peak annual sales does a new AI have to
 reach before it clears a normal corporate hurdle rate?
 
 The model is deliberately plain. Every input is stated, every assumption is
-named, and the breakeven solves are visible rather than embedded in a
-spreadsheet formula. If you disagree with an assumption you can change it and
-see what it does to the answer.
+named, and the breakeven solves are visible in the code rather than hidden in
+one place. If you disagree with an assumption you can change it and see what it
+does to the answer.
 
 Run it:
 
@@ -36,7 +36,7 @@ phases                             ($133m), development ($138m) and
                                     shape of a development programme.
 
 Revenue shape                      Ramp to full penetration over five
-                                    commercial years, hold for three, then
+                                    commercial years, hold for four, then
                                     decay 15% of peak per year to zero over
                                     the remaining commercial life.
 
@@ -134,7 +134,7 @@ TAX = 0.21
 HURDLE_IRR = 0.15
 BASE_DISCOUNT = 0.135
 
-# Penetration by commercial year: five years to full penetration, three years
+# Penetration by commercial year: five years to full penetration, four years
 # at peak, then 15% of peak lost per year to zero.
 PENETRATION = [0.20, 0.36, 0.52, 0.68, 0.84, 1.00, 1.00, 1.00, 1.00,
                0.85, 0.70, 0.55, 0.40, 0.25, 0.10, 0.00]

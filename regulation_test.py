@@ -65,6 +65,14 @@ MARGIN, TAX, DISC, LIFE = BASE["ebit_margin"], BASE["tax"], BASE["discount"], BA
 # launched in 2010, measured on their 2022 revenue.
 COHORT_MEAN = 48.6
 
+# The cohort figure above is revenue in a single late year (2022), twelve
+# years after launch, not peak annual sales. Applying this model's own
+# average revenue path to the cohort - year-12 penetration of 0.40 - gives
+# implied peak sales per active ingredient of about $121m. Both comparisons
+# are printed below: the headline multiple uses realised revenue, the
+# like-for-like multiple uses implied peak.
+IMPLIED_COHORT_PEAK = COHORT_MEAN / m.PENETRATION[12]
+
 # Registration is $35m of the $307m survey total.
 REGISTRATION_COST = 35.0
 
@@ -175,7 +183,7 @@ print()
 print("=" * 86)
 print("NPV = 0 HURDLE (peak sales required) - depends on the discount rate")
 print("=" * 86)
-print(f"{'structure':<28}" + "".join(f"{d:>10.1%}" for d in RATES) + f"{'vs cohort':>12}")
+print(f"{'structure':<28}" + "".join(f"{d:>10.1%}" for d in RATES) + f"{'vs revenue':>12}")
 results = {}
 for name, (dc, yrs, ph) in STRUCTURES.items():
     row = []
@@ -184,7 +192,7 @@ for name, (dc, yrs, ph) in STRUCTURES.items():
         row.append(h)
         results.setdefault(name, {})[f"npv_zero_at_{d:.3f}"] = h
     print(f"{name:<28}" + "".join(f"${h:>9,.0f}m" for h in row) +
-          f"{row[1]/COHORT_MEAN:>11.1f}x")
+          f"{row[1]/COHORT_MEAN:>11.1f}x")   # vs 2022 cohort revenue
 
 print()
 print("=" * 86)
@@ -193,7 +201,8 @@ print("=" * 86)
 for name, (dc, yrs, ph) in STRUCTURES.items():
     h = irr_hurdle(dc, yrs, ph)
     results.setdefault(name, {})["irr_15pct_hurdle"] = h
-    print(f"  {name:28} ${h:>9,.0f}m    ({h/COHORT_MEAN:.1f}x the 2010 cohort mean of $48.6m)")
+    print(f"  {name:28} ${h:>9,.0f}m    ({h/COHORT_MEAN:.1f}x the 2010 cohort 2022 revenue of $48.6m; "
+          f"{h/IMPLIED_COHORT_PEAK:.1f}x its implied peak of ${IMPLIED_COHORT_PEAK:.1f}m)")
 
 print()
 print("=" * 86)
@@ -205,20 +214,30 @@ print(f"  Baseline NPV=0 hurdle @8.5%:      ${base['npv_zero_at_0.085']:,.0f}m")
 print(f"  After FULL deregulation @8.5%:      ${full['npv_zero_at_0.085']:,.0f}m")
 print(f"  Change: {(full['npv_zero_at_0.085']/base['npv_zero_at_0.085']-1)*100:+.1f}%")
 print()
-print(f"  2010 cohort realised mean per AI:   ${COHORT_MEAN}m")
+print(f"  2010 cohort realised mean per AI:   ${COHORT_MEAN}m (2022 revenue)")
+print(f"  Cohort implied peak per AI:          ${IMPLIED_COHORT_PEAK:.1f}m "
+      f"(this model's revenue path, year-12 penetration {m.PENETRATION[12]:.2f})")
 print(f"  Full-deregulation hurdle @8.5%:     ${full['npv_zero_at_0.085']:,.0f}m "
-      f"= {full['npv_zero_at_0.085']/COHORT_MEAN:.1f}x the cohort mean")
+      f"= {full['npv_zero_at_0.085']/COHORT_MEAN:.1f}x the cohort 2022 revenue")
 print(f"  Full-deregulation IRR=15% hurdle:   ${full['irr_15pct_hurdle']:,.0f}m "
-      f"= {full['irr_15pct_hurdle']/COHORT_MEAN:.1f}x the cohort mean")
+      f"= {full['irr_15pct_hurdle']/COHORT_MEAN:.1f}x the cohort 2022 revenue, "
+      f"{full['irr_15pct_hurdle']/IMPLIED_COHORT_PEAK:.1f}x its implied peak")
 print()
 gap_base = base["irr_15pct_hurdle"]
 gap_full = full["irr_15pct_hurdle"]
 closed = (gap_base - gap_full) / (gap_base - COHORT_MEAN)
+closed_peak = (gap_base - gap_full) / (gap_base - IMPLIED_COHORT_PEAK)
 print(f"  Share of the distance from the ${gap_base:,.0f}m hurdle to the "
-      f"${COHORT_MEAN}m cohort mean")
+      f"${COHORT_MEAN}m cohort 2022 revenue")
 print(f"  that full deregulation closes:       {closed*100:.0f}%")
+print(f"  Measured instead against the cohort's implied peak of "
+      f"${IMPLIED_COHORT_PEAK:.1f}m, the like-for-like share is "
+      f"{closed_peak*100:.0f}%.")
 
-out = {"structures": results, "cohort_mean": COHORT_MEAN, "rates": RATES}
+out = {"structures": results, "cohort_mean": COHORT_MEAN,
+       "cohort_implied_peak": IMPLIED_COHORT_PEAK,
+       "gap_closure_vs_revenue": closed, "gap_closure_vs_implied_peak": closed_peak,
+       "rates": RATES}
 path = os.path.join(_HERE, "crop_protection_npv_regulation_test_results.json")
 with open(path, "w") as fh:
     json.dump(out, fh, indent=2)

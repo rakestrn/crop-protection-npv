@@ -49,7 +49,7 @@ each assumption moves the answer.
 | Total cost to develop and register one new AI | $307m | AgbioInvestor for CropLife International, *Time and Cost of New Agrochemical Product Discovery, Development and Registration* (May 2026) |
 | Cost split | Research $133m, Development $138m, Registration $35m | Same study, 2020–2023 cohort |
 | Development timeline | 11 years, five phases | Same study, allocated to phases |
-| Revenue shape | 5-year ramp to full penetration, 3 years at peak, then −15% of peak per year | Assumed |
+| Revenue shape | 5-year ramp to full penetration, 4 years at peak, then −15% of peak per year | Assumed |
 | Operating margin | 40% at peak (58% gross margin less 18% SG&A) | Assumed |
 | Commercial life | 15 years base (18 bull, 10 bear); development spend amortised over the same period | Assumed |
 | Cost of capital | 13.5% base, 15% corporate hurdle | Assumed — see below |
@@ -82,17 +82,25 @@ counter-argument to the thesis, and it is in the output rather than suppressed.
 `regulation_test.py` asks whether the hurdle depends on the regulatory regime
 or is set by the economics alone. It compares four structures:
 
-| Structure | 15% IRR hurdle | vs 2010 cohort mean |
-|---|---|---|
-| Baseline, as published | $427m | 8.8× |
-| Free registration ($35m removed) | $379m | 7.8× |
-| Fast lead time (8.3-year calendar) | $400m | 8.2× |
-| Full deregulation | $355m | 7.3× |
+| Structure | 15% IRR hurdle | vs $48.6m realised | vs $121.5m implied peak |
+|---|---|---|---|
+| Baseline, as published | $427m | 8.8× | 3.5× |
+| Free registration ($35m removed) | $379m | 7.8× | 3.1× |
+| Fast lead time (8.3-year calendar) | $400m | 8.2× | 3.3× |
+| Full deregulation | $355m | 7.3× | 2.9× |
 
 Full deregulation closes **19%** of the distance between the $427m hurdle and
 the $48.6m that the average active ingredient launched in 2010 actually earned.
 Registration is a real tax on the returns of innovation. It is not the binding
 constraint.
+
+Two columns, because the comparison needs one. The hurdle is a **peak-sales**
+number; $48.6m is what those ten products earned in **2022**, a single late year
+rather than their peak. Applying this model's own average revenue path to the
+cohort gives implied peak sales of about **$121.5m**, and on that like-for-like
+basis the baseline hurdle is 3.5× rather than 8.8×, and full deregulation
+closes **24%** of the gap rather than 19%. The conclusion holds either way; the
+multiple does not survive unchanged.
 
 The script prints two sanity checks before the results: how much cash each
 counterfactual actually removes, and whether any pre-launch spend is dropped by
@@ -141,7 +149,8 @@ The $48.6m cohort figure it is compared against is what the ten active
 ingredients launched in 2010 earned in 2022 — revenue in a single late year,
 twelve years after launch, not peak annual sales. Their peak years were
 higher, so on a strictly like-for-like basis the gap to the hurdle is smaller
-than the headline multiple.
+than the headline multiple: on this model's own revenue path their implied peak
+is about $121m, which puts the baseline hurdle at 3.5× rather than 8.8×.
 
 ## Source
 

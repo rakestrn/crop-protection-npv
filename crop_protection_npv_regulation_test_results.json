@@ -26,6 +26,9 @@
     }
   },
   "cohort_mean": 48.6,
+  "cohort_implied_peak": 121.5,
+  "gap_closure_vs_revenue": 0.19200779295918832,
+  "gap_closure_vs_implied_peak": 0.2377885375181158,
   "rates": [
     0.085,
     0.135,
