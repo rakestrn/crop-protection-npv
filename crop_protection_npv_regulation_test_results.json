@@ -1,14 +1,14 @@
 {
   "structures": {
     "baseline (as published)": {
-      "npv_zero_at_0.085": 230.2980428849895,
+      "npv_zero_at_0.085": 230.29804288498957,
       "npv_zero_at_0.135": 372.12040244605464,
-      "npv_zero_at_0.150": 427.24793489231865,
-      "irr_15pct_hurdle": 427.24793489231865
+      "npv_zero_at_0.150": 427.24793489231877,
+      "irr_15pct_hurdle": 427.24793489231877
     },
     "free registration": {
-      "npv_zero_at_0.085": 204.04256568311774,
-      "npv_zero_at_0.135": 329.6962523300549,
+      "npv_zero_at_0.085": 204.0425656831178,
+      "npv_zero_at_0.135": 329.696252330055,
       "npv_zero_at_0.150": 378.53888694042575,
       "irr_15pct_hurdle": 378.53888694042575
     },
@@ -19,7 +19,7 @@
       "irr_15pct_hurdle": 400.1661259035392
     },
     "full deregulation": {
-      "npv_zero_at_0.085": 197.94137397824778,
+      "npv_zero_at_0.085": 197.94137397824773,
       "npv_zero_at_0.135": 311.56245946686863,
       "npv_zero_at_0.150": 354.5445806050901,
       "irr_15pct_hurdle": 354.5445806050901
@@ -27,8 +27,8 @@
   },
   "cohort_mean": 48.6,
   "cohort_implied_peak": 121.5,
-  "gap_closure_vs_revenue": 0.19200779295918832,
-  "gap_closure_vs_implied_peak": 0.2377885375181158,
+  "gap_closure_vs_revenue": 0.19200779295918857,
+  "gap_closure_vs_implied_peak": 0.23778853751811607,
   "rates": [
     0.085,
     0.135,
