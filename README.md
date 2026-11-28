@@ -16,7 +16,7 @@ no workbook.
 
 ```bash
 python3 crop_protection_npv.py            # base model
-python3 regulation_test.py                # five regulatory counterfactuals
+python3 regulation_test.py                # the regulatory counterfactuals
 python3 alternative_construction.py       # an independent second construction
 ```
 
@@ -35,9 +35,9 @@ ingredient with a 15-year commercial life.
 
 | | Peak sales needed |
 |---|---:|
-| NPV = 0 at a 13.5% discount rate | **$518m** |
-| NPV = 0 at an 8.5% discount rate | $301m |
-| 15% IRR hurdle | **$606m** |
+| NPV = 0 at a 13.5% discount rate | **$509m** |
+| NPV = 0 at an 8.5% discount rate | $294m |
+| 15% IRR hurdle | **$596m** |
 | 15% IRR hurdle, alternative construction | $696m |
 
 Two different numbers, and they are not interchangeable:
@@ -50,31 +50,43 @@ The 8.5% rate is **author-selected**, not a market rate. No source publishes it.
 It is used as a deliberately low case: a hurdle below what any disclosed cost of
 capital supports would flatter the conclusion the article argues against itself.
 
-## The five counterfactuals
+## The regulatory counterfactuals
 
 `regulation_test.py` holds the $307m cost base and the revenue path fixed and
 removes one regulatory channel at a time.
 
 | Structure | NPV=0 @ 8.5% | NPV=0 @ 13.5% | 15% IRR hurdle |
 |---|---:|---:|---:|
-| Baseline (as published) | $301m | $518m | $606m |
-| Free registration | $267m | $459m | $537m |
-| Approval wait removed, R&D programme unchanged | $240m | $364m | $410m |
-| 1995-speed development calendar | $285m | $469m | $541m |
-| Both changes together | $252m | $416m | $480m |
+| Baseline (as published) | $294m | $509m | $596m |
+| Free registration | $274m | $481m | $566m |
+| 1995-speed development calendar | $262m | $422m | $484m |
+| Approval wait removed, R&D programme unchanged | $261m | $424m | $488m |
+| Both changes together | $243m | $396m | $455m |
+| Both, plus approval wait removed | $223m | $347m | $392m |
 
-Two things this test is careful about:
+Three things this test is careful about:
 
+- **Free registration removes the registration phase's cost and nothing else.**
+  An earlier version scaled every phase down pro rata, so roughly $31m of the
+  saving came out of discovery and research rather than registration, and the
+  post-launch cost lines fell as well because they scaled with the same total.
 - **Removing the approval wait does not cancel the R&D programme.** The money
-  spent before approval is still spent. The counterfactual starts revenue
-  earlier and leaves the cost schedule alone.
+  spent before approval is still spent, and the cost schedule is untouched.
+  Revenue starts 1.5 years earlier instead.
 - **This is not deregulation.** It removes one cost category and one calendar.
   It does not remove the regulatory constraint, and the article says so.
 
 Against the ten active ingredients launched in 2010 — $48.6m average realised
 2022 revenue, and about $121.5m implied peak on the model's own revenue path —
-removing both channels closes **23%** of the gap to realised revenue and **26%**
-of the gap to implied peak.
+removing both channels closes **26%** of the gap to realised revenue and **30%**
+of the gap to implied peak. Across every case tested, the range is **0% to
+37%** against realised revenue and **0% to 43%** against implied peak.
+
+Note that compressing the calendar also moves spend forward, and money spent
+earlier is discounted less. That effect raises the hurdle rather than lowering
+it, and it is not about regulation at all. The model lets it happen rather than
+assuming compression is free, which is why the compressed-calendar case is not
+automatically the more favourable one.
 
 ## The alternative construction
 
@@ -89,9 +101,21 @@ re-parameterisation of the same one. Same $307m cost base; different structure:
 | Tax | 21% | 25% |
 | Separate post-launch cost lines | yes | no |
 
-It produces a hurdle of **$696m** against **$606m** — a $90m spread from
+It produces a hurdle of **$696m** against **$596m** — a $101m spread from
 assumption choices alone. That spread is the point. A single model construction
 is not a measurement of an industry.
+
+The alternative also differs from the published model in one respect that an
+earlier version did not disclose: it spends the $307m evenly over **ten**
+pre-launch years and launches at t=10, against the published model's uneven
+eleven-year schedule launching at t=11. Spending the same money earlier raises
+its present value. The script now states this and prices it separately: the
+timing and post-launch cost-line changes are worth $25m of the spread, and the
+margin and tax changes are worth $87m.
+
+Because several assumptions change at once, the spread cannot by itself show
+which assumption matters most. That is why the decomposition is reported
+separately rather than left to inference.
 
 ## How the cost base is built
 
@@ -168,7 +192,24 @@ than in its favour:
   peak margin line subtracted dollar values of revenue from percentage values,
   producing a 74.24% margin on a 40% business.
 - The regulatory calendar counterfactual was described as removing 3.1 years of
-  delay. It moved first revenue by two years, from year 11 to year 9.
+  delay. It moved first revenue by two years, from year 11 to year 9, because
+  the engine ran on whole-year periods. The engine now carries continuous time,
+  so the calendar compresses to exactly 8.3 years and first revenue arrives
+  2.7 years earlier.
+- The "free registration" counterfactual removed the wrong money. It scaled
+  every phase down pro rata, so most of the saving came out of discovery
+  rather than registration, and it also reduced the post-launch cost lines.
+  The removal is now phase-specific, with post-launch spend held fixed.
+- A third calendar variant launched commercial sales three years before the
+  registration dossier was finished, which is not what removing an approval
+  queue looks like. That case is gone; the approval-wait case now holds the
+  R&D programme and its costs exactly fixed and moves only the launch date.
+- The pre-launch schedule was scaled twice, so it summed to $308m against the
+  $307m amortised cost. The double-scaling is removed and the identity is
+  asserted in code.
+- The IRR bisection for the 15% hurdle had its direction inverted, so every
+  query returned the upper bound. The hurdle is now $596m, not the $606m
+  published previously.
 
 ## What this model does not do
 
@@ -186,12 +227,20 @@ stated assumptions. Comparing that hurdle to realised outcomes is the reader's
 step, and the article is explicit about what the comparison can and cannot
 support.
 
+The working-capital correction is run across a range rather than a point,
+because the two US filers whose balance sheets could be reproduced directly
+give about 35% of revenue at Corteva and about 72% at FMC. At the 15% hurdle
+that is $697m and $848m respectively, against $596m without it. A multinational
+originator that expenses development spend as incurred and offsets it against
+group profits takes the Corteva case back to $582m. At zero tax the capitalised
+and expensed treatments are identical, which is the check that proves it.
+
 ## Files
 
 | File | What it does |
 |---|---|
 | `crop_protection_npv.py` | Base model: cash flows, NPV, IRR, sensitivity tables |
-| `regulation_test.py` | The five counterfactual structures above |
+| `regulation_test.py` | The counterfactual structures above |
 | `alternative_construction.py` | The independent second construction |
 | `crop_protection_npv_model_results.json` | Output of the base model |
 | `crop_protection_npv_regulation_test_results.json` | Output of the counterfactual test |

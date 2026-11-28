@@ -1,14 +1,22 @@
 {
   "alternative_15pct_irr_hurdle": 696.3551388721155,
-  "published_model_15pct_irr_hurdle": 606.2822390276931,
-  "spread": -90.07289984442241,
+  "published_model_15pct_irr_hurdle": 595.7690903759226,
+  "spread": -100.58604849619292,
   "assumptions": {
     "dev_cost": 307.0,
     "operating_contribution": 0.35,
     "commercial_life": 10,
     "tax": 0.25,
     "post_peak_erosion": 0.25,
-    "separate_post_launch_cost_lines": false
+    "separate_post_launch_cost_lines": false,
+    "pre_launch_years": 10,
+    "pre_launch_spend_profile": "even"
+  },
+  "decomposition": {
+    "timing_and_post_launch_costs_only": 671.2962587800234,
+    "margin_and_tax_only": 609.3107465131009,
+    "timing_and_cost_line_effect": 25.058880092092068,
+    "margin_and_tax_effect": 87.04439235901464
   },
   "cohort_mean": 48.6,
   "cohort_implied_peak": 121.5
