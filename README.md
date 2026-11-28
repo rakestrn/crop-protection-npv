@@ -82,14 +82,33 @@ Three things this test is careful about:
 Against the ten active ingredients launched in 2010 — $48.6m average realised
 2022 revenue, and about $121.5m implied peak on the model's own revenue path —
 removing both channels closes **26%** of the gap to realised revenue and **30%**
-of the gap to implied peak. Across every case tested, the range is **0% to
-37%** against realised revenue and **0% to 43%** against implied peak.
+of the gap to implied peak. Across the five regulatory counterfactuals tested,
+the range is **5% to 37%** against realised revenue and **6% to 43%** against
+implied peak (0% being the baseline against itself).
 
 Note that compressing the calendar also moves spend forward, and money spent
 earlier is discounted less. That effect raises the hurdle rather than lowering
 it, and it is not about regulation at all. The model lets it happen rather than
 assuming compression is free, which is why the compressed-calendar case is not
 automatically the more favourable one.
+
+## Sales-trajectory shapes and empirical peak-sales tiers
+
+`crop_protection_npv.py` also evaluates two blocks added for the empirical
+comparison in the article:
+
+1. **Empirical peak-sales tiers (`empirical_peak_tiers`):** NPV at 8.5%, 9.0%
+   and 13.5%, plus IRR, at `$45m` (near the 2010 cohort's $48.6m 2022 revenue
+   and the $42m 67-launch post-2005 median), `$75m`, `$200m` (near the $211.5m
+   2005–2013 survivor median), and `$500m`.
+2. **Commercial sales-trajectory shapes (`trajectory_shapes`):** breakeven peak
+   sales at 8.5%, 9.0%, 13.5% and 15% IRR across six trajectory parameterisations
+   (base 5y ramp / 4y plateau / 15% fade / 15y life; extended 6y plateau over
+   18y life; defended 8y plateau + 8% fade over 18y life; slow 8y ramp + 4y
+   plateau over 18y life; 20-year defended franchise with 10y ramp + 6y plateau
+   + 8% fade; and a diamide-like 10y ramp with no plateau and 15% fade over 15y
+   life), spanning **$230m–$377m** across 8.5%–9.0% WACC and **$533m–$750m** at
+   the 15% IRR hurdle.
 
 ## The alternative construction
 
