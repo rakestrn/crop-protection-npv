@@ -8,6 +8,8 @@
       "life": 15,
       "plateau_years": 4,
       "npv": -154.5807232118,
+      "npv_at_8_5pct": -166.6520438628,
+      "npv_at_9_0pct": -166.0535739334,
       "irr": -0.026571238
     },
     "Cost-overrun mid-size": {
@@ -18,6 +20,8 @@
       "life": 10,
       "plateau_years": 4,
       "npv": -177.546327562,
+      "npv_at_8_5pct": -185.6749253947,
+      "npv_at_9_0pct": -185.9281042086,
       "irr": -0.0198246314
     },
     "Blockbuster": {
@@ -28,6 +32,8 @@
       "life": 18,
       "plateau_years": 7,
       "npv": 547.6523609823,
+      "npv_at_8_5pct": 879.9183536867,
+      "npv_at_9_0pct": 800.637737536,
       "irr": 0.2512159789
     }
   },
@@ -49,14 +55,103 @@
     "0.55": 433.2866111825
   },
   "npv_zero_breakeven_by_discount": {
+    "0.075": 261.880856736,
     "0.080": 277.3463230113,
     "0.085": 293.6344244573,
     "0.090": 310.741454662,
     "0.100": 347.5553950466,
+    "0.105": 367.3413014941,
     "0.110": 388.1018151348,
     "0.120": 432.8359698559,
     "0.135": 508.5082854161,
     "0.150": 595.7690903759
+  },
+  "reference_peak_cases": {
+    "Typical launch ($45m)": {
+      "peak_sales": 45.0,
+      "npv_at_8_5pct": -194.4661780508,
+      "npv_at_9_0pct": -191.803213323,
+      "npv_at_13_5pct": -167.7660600557,
+      "irr": -0.0703967866
+    },
+    "Narrow molecule ($75m)": {
+      "peak_sales": 75.0,
+      "npv_at_8_5pct": -166.6520438628,
+      "npv_at_9_0pct": -166.0535739334,
+      "npv_at_13_5pct": -154.5807232118,
+      "irr": -0.026571238
+    },
+    "Median successful launch ($200m)": {
+      "peak_sales": 200.0,
+      "npv_at_8_5pct": -69.1278884673,
+      "npv_at_9_0pct": -75.6719066507,
+      "npv_at_13_5pct": -107.833376008,
+      "irr": 0.0520742968
+    },
+    "Blockbuster threshold ($500m)": {
+      "peak_sales": 500.0,
+      "npv_at_8_5pct": 151.6264520098,
+      "npv_at_9_0pct": 128.7334356686,
+      "npv_at_13_5pct": -2.961431435,
+      "irr": 0.1334161122
+    }
+  },
+  "trajectory_sensitivity": {
+    "Base (5y ramp, 4y plateau, 15%/yr fade, 15y life)": {
+      "ramp_years": 5,
+      "plateau_years": 4,
+      "erosion_rate": 0.15,
+      "life": 15,
+      "peak_equivalent_years": 9.45,
+      "npv_zero_at_8_5pct": 293.6344244573,
+      "npv_zero_at_9_0pct": 310.741454662,
+      "npv_zero_at_13_5pct": 508.5082854161,
+      "irr_15pct_hurdle": 595.7690903759
+    },
+    "Slow ramp (8y ramp, 4y plateau, 15%/yr fade, 15y life)": {
+      "ramp_years": 8,
+      "plateau_years": 4,
+      "erosion_rate": 0.15,
+      "life": 15,
+      "peak_equivalent_years": 10.5,
+      "npv_zero_at_8_5pct": 293.1394426914,
+      "npv_zero_at_9_0pct": 311.8444749671,
+      "npv_zero_at_13_5pct": 532.7747751764,
+      "irr_15pct_hurdle": 632.0435041656
+    },
+    "Fast niche SDHI (3y ramp, 8y plateau, 10%/yr fade, 15y life)": {
+      "ramp_years": 3,
+      "plateau_years": 8,
+      "erosion_rate": 0.1,
+      "life": 15,
+      "peak_equivalent_years": 12.4,
+      "npv_zero_at_8_5pct": 233.490498062,
+      "npv_zero_at_9_0pct": 247.5829569293,
+      "npv_zero_at_13_5pct": 410.8239379048,
+      "irr_15pct_hurdle": 482.9010530118
+    },
+    "Defended franchise (7y ramp, 8y plateau, 5%/yr fade, 20y life)": {
+      "ramp_years": 7,
+      "plateau_years": 8,
+      "erosion_rate": 0.05,
+      "life": 20,
+      "peak_equivalent_years": 16.05,
+      "npv_zero_at_8_5pct": 229.6646691094,
+      "npv_zero_at_9_0pct": 246.0759818312,
+      "npv_zero_at_13_5pct": 443.3019015111,
+      "irr_15pct_hurdle": 533.3023861708
+    },
+    "Steep cliff (5y ramp, 4y plateau, 25%/yr fade, 15y life)": {
+      "ramp_years": 5,
+      "plateau_years": 4,
+      "erosion_rate": 0.25,
+      "life": 15,
+      "peak_equivalent_years": 8.1,
+      "npv_zero_at_8_5pct": 325.9535791939,
+      "npv_zero_at_9_0pct": 343.8472945509,
+      "npv_zero_at_13_5pct": 549.4198329638,
+      "irr_15pct_hurdle": 639.421826491
+    }
   },
   "irr_breakeven_with_5pct_royalty": 680.8789604296,
   "cost_structure": {

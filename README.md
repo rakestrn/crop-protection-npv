@@ -1,6 +1,6 @@
 # Crop protection NPV model
 
-The cash-flow model behind **"Driving Innovation in Crop Protection: The 7 Percent Problem"**.
+The cash-flow model behind **"The Shrinking Prize: Why Crop Protection Makes Fewer New Molecules"** (formerly *"Driving Innovation in Crop Protection: The 7 Percent Problem"*).
 
 The question it answers: **what would a new active ingredient have had to earn to
 justify a full originator development programme** — and what share of the crop
@@ -23,8 +23,8 @@ python3 alternative_construction.py       # an independent second construction
 Each script writes a JSON file next to itself with the results, so the numbers
 in the article can be checked without reading the code.
 
-This is the model behind [Driving Innovation in Crop Protection: The 7 Percent
-Problem](https://blog.ryanrakestraw.com/driving-innovation-in-crop-protection-the-7-percent-problem/).
+This is the model behind [The Shrinking Prize: Why Crop Protection Makes Fewer
+New Molecules](https://blog.ryanrakestraw.com/the-shrinking-prize-why-crop-protection-makes-fewer-new-molecules/).
 
 ---
 
@@ -35,8 +35,11 @@ ingredient with a 15-year commercial life.
 
 | | Peak sales needed |
 |---|---:|
-| NPV = 0 at a 13.5% discount rate | **$509m** |
+| NPV = 0 at a 7.5% discount rate | $262m |
 | NPV = 0 at an 8.5% discount rate | $294m |
+| NPV = 0 at a 9.0% discount rate | **$311m** |
+| NPV = 0 at a 10.5% discount rate | $367m |
+| NPV = 0 at a 13.5% discount rate | **$509m** |
 | 15% IRR hurdle | **$596m** |
 | 15% IRR hurdle, alternative construction | $696m |
 

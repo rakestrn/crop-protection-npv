@@ -303,26 +303,27 @@ FMC_WC = 0.724
 
 # Penetration by commercial year c: five years to full penetration, four
 # years at peak, then 15 percentage points of peak lost per year to zero.
-def penetration(c: int, plateau_years: int = 4) -> float:
+def penetration(c: int, plateau_years: int = 4, ramp_years: int = 5,
+                erosion_rate: float = 0.15) -> float:
     """Penetration factor for commercial year c.
 
-    A five-year ramp (0.20 rising to 0.84), then `plateau_years` at full
-    penetration, then 15 percentage points of peak lost per year, floored at
-    zero so revenue never books negative.
+    A linear ramp from 0.20 in launch year 0 across `ramp_years` years (for
+    the default 5-year ramp: 0.20, 0.36, 0.52, 0.68, 0.84), then
+    `plateau_years` at full penetration (1.00), then `erosion_rate` of peak
+    lost per year, floored at zero so revenue never books negative.
 
-    plateau_years=4 reproduces the base case, whose commercial life is
-    fifteen years. A scenario with a longer commercial life needs a longer
-    plateau: with the erosion rule fixed, an eighteen-year life reached zero
-    revenue at year fifteen and left three of the eighteen years earning
-    nothing.
+    plateau_years=4, ramp_years=5, erosion_rate=0.15 reproduces the base case,
+    whose commercial life is fifteen years. A scenario with a longer commercial
+    life needs a longer plateau: with the erosion rule fixed, an eighteen-year
+    life reached zero revenue at year fifteen and left three of the eighteen
+    years earning nothing.
     """
-    ramp = (0.20, 0.36, 0.52, 0.68, 0.84)
-    if c < len(ramp):
-        return ramp[c]
-    peak_end = len(ramp) + plateau_years - 1
+    if c < ramp_years:
+        return 0.20 + (0.80 / ramp_years) * c
+    peak_end = ramp_years + plateau_years - 1
     if c <= peak_end:
         return 1.00
-    return max(0.0, 1.0 - 0.15 * (c - peak_end))
+    return max(0.0, 1.0 - erosion_rate * (c - peak_end))
 
 
 # The base-case revenue path, derived from penetration() so the two cannot
@@ -402,6 +403,8 @@ def cashflow_pairs(peak_sales: float, dev_cost: float, ebit_margin: float,
                    scaleup: float = SCALEUP,
                    nol_carryforward: bool = True,
                    plateau_years: int = 4,
+                   ramp_years: int = 5,
+                   erosion_rate: float = 0.15,
                    phases: list[tuple[float, float, float]] | None = None
                    ) -> list[tuple[float, float]]:
     """Year-by-year unlevered free cash flow as (time in years, amount).
@@ -461,7 +464,8 @@ def cashflow_pairs(peak_sales: float, dev_cost: float, ebit_margin: float,
     prev_wc = 0.0
     nol = 0.0
     for c in range(life):
-        revenue = peak_sales * penetration(c, plateau_years)
+        revenue = peak_sales * penetration(c, plateau_years, ramp_years,
+                                           erosion_rate)
         depreciation = scaleup / SCALEUP_LIFE if c < SCALEUP_LIFE else 0.0
         marketing = LAUNCH_MARKETING if c == 0 else 0.0
         stewardship = STEWARD / STEWARD_YEARS if c < STEWARD_YEARS else 0.0
@@ -603,17 +607,49 @@ SCENARIOS = {
 
 def evaluate(peak_sales: float, dev_cost: float, ebit_margin: float,
              tax: float, discount: float, life: int,
-             plateau_years: int = 4) -> dict:
+             plateau_years: int = 4, ramp_years: int = 5,
+             erosion_rate: float = 0.15) -> dict:
     """NPV and IRR for one scenario."""
     pairs = cashflow_pairs(peak_sales, dev_cost, ebit_margin, tax, life,
-                           plateau_years=plateau_years)
+                           plateau_years=plateau_years,
+                           ramp_years=ramp_years,
+                           erosion_rate=erosion_rate)
     return {
         "peak_sales": peak_sales, "dev_cost": dev_cost,
         "ebit_margin": ebit_margin, "discount": discount, "life": life,
         "plateau_years": plateau_years,
         "npv": npv_of(pairs, discount),
+        "npv_at_8_5pct": npv_of(pairs, 0.085),
+        "npv_at_9_0pct": npv_of(pairs, 0.09),
         "irr": irr_of(pairs),
     }
+
+
+# Three empirical peak-sales tiers from the post-2005 launch distribution
+# (2010 cohort ~45m; median post-2005 $100m+ survivor ~200m; blockbuster 500m),
+# evaluated on the base cost structure ($307m R&D, 40% operating contribution,
+# 21% tax, 15-year commercial life).
+PEAK_SALES_REFERENCE_CASES = {
+    "Typical launch ($45m)": 45.0,
+    "Narrow molecule ($75m)": 75.0,
+    "Median successful launch ($200m)": 200.0,
+    "Blockbuster threshold ($500m)": 500.0,
+}
+
+# Sales-trajectory shapes tested against the base 5y-ramp / 4y-plateau /
+# 15%/yr-erosion / 15y-life curve.
+TRAJECTORY_SHAPES = {
+    "Base (5y ramp, 4y plateau, 15%/yr fade, 15y life)": dict(
+        ramp_years=5, plateau_years=4, erosion_rate=0.15, life=15),
+    "Slow ramp (8y ramp, 4y plateau, 15%/yr fade, 15y life)": dict(
+        ramp_years=8, plateau_years=4, erosion_rate=0.15, life=15),
+    "Fast niche SDHI (3y ramp, 8y plateau, 10%/yr fade, 15y life)": dict(
+        ramp_years=3, plateau_years=8, erosion_rate=0.10, life=15),
+    "Defended franchise (7y ramp, 8y plateau, 5%/yr fade, 20y life)": dict(
+        ramp_years=7, plateau_years=8, erosion_rate=0.05, life=20),
+    "Steep cliff (5y ramp, 4y plateau, 25%/yr fade, 15y life)": dict(
+        ramp_years=5, plateau_years=4, erosion_rate=0.25, life=15),
+}
 
 
 def main() -> None:
@@ -667,10 +703,66 @@ def main() -> None:
 
     print()
     print("Peak sales required for NPV = 0, by discount rate (base parameters)")
-    for r in (0.08, 0.085, 0.09, 0.10, 0.11, 0.12, 0.135, 0.15):
+    for r in (0.075, 0.08, 0.085, 0.09, 0.10, 0.105, 0.11, 0.12, 0.135, 0.15):
         v = breakeven_npv(b["dev_cost"], b["ebit_margin"], b["tax"], b["life"], r)
         print(f"   discount {r:.1%} -> ${v:,.0f}m peak sales")
         out.setdefault("npv_zero_breakeven_by_discount", {})[f"{r:.3f}"] = v
+
+    print()
+    print("Empirical peak-sales tiers on base cost structure ($307m R&D, 40% contribution)")
+    for label, pk in PEAK_SALES_REFERENCE_CASES.items():
+        pairs = cashflow_pairs(pk, b["dev_cost"], b["ebit_margin"], b["tax"], b["life"])
+        npv_85 = npv_of(pairs, 0.085)
+        npv_90 = npv_of(pairs, 0.09)
+        npv_135 = npv_of(pairs, 0.135)
+        r_irr = irr_of(pairs)
+        irr_str = f"{r_irr:.2%}" if r_irr is not None else "n/a"
+        print(f"   {label:34}: NPV@8.5% ${npv_85:+7.1f}m | NPV@9.0% ${npv_90:+7.1f}m | "
+              f"NPV@13.5% ${npv_135:+7.1f}m | IRR {irr_str}")
+        out.setdefault("reference_peak_cases", {})[label] = {
+            "peak_sales": pk,
+            "npv_at_8_5pct": npv_85,
+            "npv_at_9_0pct": npv_90,
+            "npv_at_13_5pct": npv_135,
+            "irr": r_irr,
+        }
+
+    print()
+    print("Breakeven peak sales by sales-trajectory shape ($307m R&D, 40% contribution)")
+    for label, spec in TRAJECTORY_SHAPES.items():
+        pk_yrs = sum(penetration(c, spec["plateau_years"], spec["ramp_years"],
+                                 spec["erosion_rate"])
+                     for c in range(spec["life"]))
+        be_85 = breakeven_npv(b["dev_cost"], b["ebit_margin"], b["tax"],
+                              spec["life"], 0.085,
+                              plateau_years=spec["plateau_years"],
+                              ramp_years=spec["ramp_years"],
+                              erosion_rate=spec["erosion_rate"])
+        be_90 = breakeven_npv(b["dev_cost"], b["ebit_margin"], b["tax"],
+                              spec["life"], 0.09,
+                              plateau_years=spec["plateau_years"],
+                              ramp_years=spec["ramp_years"],
+                              erosion_rate=spec["erosion_rate"])
+        be_135 = breakeven_npv(b["dev_cost"], b["ebit_margin"], b["tax"],
+                               spec["life"], 0.135,
+                               plateau_years=spec["plateau_years"],
+                               ramp_years=spec["ramp_years"],
+                               erosion_rate=spec["erosion_rate"])
+        be_15 = breakeven_irr(HURDLE_IRR, b["dev_cost"], b["ebit_margin"],
+                              b["tax"], spec["life"], 0.135,
+                              plateau_years=spec["plateau_years"],
+                              ramp_years=spec["ramp_years"],
+                              erosion_rate=spec["erosion_rate"])
+        print(f"   {label:56}: {pk_yrs:4.1f} pk-yrs | "
+              f"8.5% ${be_85:5.0f}m | 9.0% ${be_90:5.0f}m | 15% IRR ${be_15:5.0f}m")
+        out.setdefault("trajectory_sensitivity", {})[label] = {
+            **spec,
+            "peak_equivalent_years": pk_yrs,
+            "npv_zero_at_8_5pct": be_85,
+            "npv_zero_at_9_0pct": be_90,
+            "npv_zero_at_13_5pct": be_135,
+            "irr_15pct_hurdle": be_15,
+        }
 
     # A 5% royalty deduction is arithmetically identical to a 5pp reduction
     # in contribution margin.
