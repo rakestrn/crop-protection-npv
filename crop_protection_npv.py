@@ -352,6 +352,8 @@ TRAJECTORY_SHAPES = {
         ramp_years=5, plateau_years=4, erosion_rate=0.15, life=15),
     "Slow ramp (8y ramp, 4y plateau, 15%/yr fade, 15y life)": dict(
         ramp_years=8, plateau_years=4, erosion_rate=0.15, life=15),
+    "Diamide-like (10y ramp, no plateau, 15%/yr fade, 15y life)": dict(
+        ramp_years=10, plateau_years=0, erosion_rate=0.15, life=15),
     "Fast niche SDHI (3y ramp, 8y plateau, 10%/yr fade, 15y life)": dict(
         ramp_years=3, plateau_years=8, erosion_rate=0.10, life=15),
     "Defended franchise (7y ramp, 8y plateau, 5%/yr fade, 20y life)": dict(

@@ -119,6 +119,17 @@
       "npv_zero_at_13_5pct": 532.7747751764,
       "irr_15pct_hurdle": 632.0435041656
     },
+    "Diamide-like (10y ramp, no plateau, 15%/yr fade, 15y life)": {
+      "ramp_years": 10,
+      "plateau_years": 0,
+      "erosion_rate": 0.15,
+      "life": 15,
+      "peak_equivalent_years": 8.35,
+      "npv_zero_at_8_5pct": 355.241287479,
+      "npv_zero_at_9_0pct": 377.2513117989,
+      "npv_zero_at_13_5pct": 634.8088198693,
+      "irr_15pct_hurdle": 749.5924104893
+    },
     "Fast niche SDHI (3y ramp, 8y plateau, 10%/yr fade, 15y life)": {
       "ramp_years": 3,
       "plateau_years": 8,
