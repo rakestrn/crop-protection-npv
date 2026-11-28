@@ -290,6 +290,17 @@ TAX = 0.21
 HURDLE_IRR = 0.15
 BASE_DISCOUNT = 0.135
 
+# Trade working capital as a percentage of revenue, computed from reported
+# balance sheets rather than assumed:
+#   Corteva, Inc. FY2025 Form 10-K: AR $4,881m + inventories $5,667m
+#     less AP $4,398m over revenue $17,401m = 35.3%
+#   FMC Corporation FY2025 Form 10-K: the same computation gives 72.4%,
+#     inflated by a pre-divestiture inventory build.
+# Both are whole-company ratios and both are run; neither is a point estimate
+# for the industry.
+CORTEVA_WC = 0.353
+FMC_WC = 0.724
+
 # Penetration by commercial year c: five years to full penetration, four
 # years at peak, then 15 percentage points of peak lost per year to zero.
 PENETRATION = [0.20, 0.36, 0.52, 0.68, 0.84, 1.00, 1.00, 1.00, 1.00,
@@ -638,27 +649,31 @@ def main() -> None:
 
     print()
     print("Cost structure: working capital and R&D tax treatment")
+    print("   Working capital is taken at Corteva's 35% of revenue, the lower of")
+    print("   the two filed balance-sheet ratios. The FMC ratio (72%) is run")
+    print("   separately below; neither is a point estimate for the industry.")
     for r in (0.085, 0.135, 0.15):
         plain = breakeven_npv(b["dev_cost"], b["ebit_margin"], b["tax"], b["life"], r)
         nwc = breakeven_npv(b["dev_cost"], b["ebit_margin"], b["tax"], b["life"], r,
-                             working_capital=0.42)
+                             working_capital=CORTEVA_WC)
         both = breakeven_npv(b["dev_cost"], b["ebit_margin"], b["tax"], b["life"], r,
-                             working_capital=0.42, tax_shield=True)
+                             working_capital=CORTEVA_WC, tax_shield=True)
         expensed = breakeven_npv(b["dev_cost"], b["ebit_margin"], b["tax"], b["life"], r,
-                                 working_capital=0.42, tax_shield=True,
+                                 working_capital=CORTEVA_WC, tax_shield=True,
                                  expense_rd=True)
         print(f"   discount {r:.1%}: base ${plain:,.0f}m | "
-              f"NWC 42% ${nwc:,.0f}m | NWC + shield ${both:,.0f}m | "
+              f"NWC {CORTEVA_WC:.0%} ${nwc:,.0f}m | NWC + shield ${both:,.0f}m | "
               f"NWC + shield + R&D expensed ${expensed:,.0f}m")
         out.setdefault("cost_structure", {})[f"{r:.4f}"] = {
-            "published_spec": plain, "nwc_42pct": nwc,
-            "nwc_42pct_with_tax_shield": both,
-            "nwc_42pct_shield_rdexpensed": expensed}
+            "published_spec": plain,
+            "nwc_corteva_35pct": nwc,
+            "nwc_corteva_35pct_with_tax_shield": both,
+            "nwc_corteva_35pct_shield_rdexpensed": expensed}
 
     print()
     print("Working capital across the range implied by two filed balance sheets")
-    for label, wc in (("Corteva 35%", 0.353), ("mid 42%", 0.42),
-                      ("FMC 72%", 0.724)):
+    for label, wc in (("Corteva 35%", CORTEVA_WC),
+                      ("FMC 72%", FMC_WC)):
         v = breakeven_irr(HURDLE_IRR, b["dev_cost"], b["ebit_margin"], b["tax"],
                           b["life"], b["discount"], working_capital=wc)
         ve = breakeven_irr(HURDLE_IRR, b["dev_cost"], b["ebit_margin"], b["tax"],

@@ -132,6 +132,35 @@ at the level of its own functional totals rather than apportioned by phase:
 The survey is of BASF Agricultural Solutions, Bayer Crop Science, Corteva, FMC
 and Syngenta, on the 2020–2023 launch cohort.
 
+## Working capital and the tax treatment
+
+The base case carries **no working-capital funding**. That is a deliberate
+omission, and it is disclosed rather than buried: working capital is not
+included in the survey's development cost, and it is not in the base case
+here either.
+
+The correction is run against two ratios computed from reported balance
+sheets, not assumed:
+
+| Case | Trade working capital | 15% IRR hurdle | With group offset and R&D expensed |
+|---|---:|---:|---:|
+| Corteva, Inc. FY2025 Form 10-K | 35.3% | $697m | $582m |
+| FMC Corporation FY2025 Form 10-K | 72.4% | $848m | $708m |
+| Base case, no working capital | — | $596m | — |
+
+Corteva is computed as accounts receivable $4,881m plus inventories $5,667m
+less accounts payable $4,398m over revenue $17,401m. FMC's ratio is inflated
+by a pre-divestiture inventory build. Both are whole-company ratios, and
+neither is a point estimate for the industry, so the model reports the range
+rather than averaging it.
+
+The gain from expensing development spend is **not** the removal of a book
+charge — the model already adds non-cash amortisation back into free cash
+flow, so no cash is created by dropping it. The gain is *when* the deduction
+is taken and *whether* there is profit elsewhere in the group to offset it
+against. At zero tax the two treatments are identical, which is the check
+that proves it; the model runs that identity as a self-check.
+
 ## Other stated assumptions
 
 | Input | Value |
