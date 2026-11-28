@@ -786,9 +786,29 @@ def main() -> None:
     here = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(here, "crop_protection_npv_model_results.json")
     with open(path, "w") as fh:
-        json.dump(out, fh, indent=2, default=str)
+        json.dump(_rounded(out), fh, indent=2, default=str)
     print(f"\nResults written to {path}")
 
+
+
+def _rounded(obj, ndigits=10):
+    """Round every float in a results structure to a fixed precision.
+
+    The published JSON files are artefacts that reviewers may re-run and
+    compare byte-for-byte. Floating-point arithmetic is not bit-reproducible
+    across interpreter and library builds, so the last few digits of a
+    result can differ between two runs of the same code on the same
+    machine. Rounding at the point of serialisation removes that noise
+    without touching any value the model actually computes: at ten decimal
+    places these are dollar-million figures quoted to the cent.
+    """
+    if isinstance(obj, dict):
+        return {k: _rounded(v, ndigits) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_rounded(v, ndigits) for v in obj]
+    if isinstance(obj, float):
+        return round(obj, ndigits)
+    return obj
 
 if __name__ == "__main__":
     main()

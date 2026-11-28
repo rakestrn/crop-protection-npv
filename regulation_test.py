@@ -389,6 +389,27 @@ print("  NOTE: this share is an arithmetic distance between a scenario")
 print("  threshold and a selected comparator. It is NOT the proportion of")
 print("  weak industry returns caused by regulation.")
 
+
+def _rounded(obj, ndigits=10):
+    """Round every float in a results structure to a fixed precision.
+
+    The published JSON files are artefacts that reviewers may re-run and
+    compare byte-for-byte. Floating-point arithmetic is not bit-reproducible
+    across interpreter and library builds, so the last few digits of a
+    result can differ between two runs of the same code on the same
+    machine. Rounding at the point of serialisation removes that noise
+    without touching any value the model actually computes: at ten decimal
+    places these are dollar-million figures quoted to the cent.
+    """
+    if isinstance(obj, dict):
+        return {k: _rounded(v, ndigits) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_rounded(v, ndigits) for v in obj]
+    if isinstance(obj, float):
+        return round(obj, ndigits)
+    return obj
+
+
 out = {"structures": results, "cohort_mean": COHORT_MEAN,
        "cohort_implied_peak": IMPLIED_COHORT_PEAK,
        "gap_closure_vs_revenue": closed, "gap_closure_vs_implied_peak": closed_peak,
@@ -400,5 +421,5 @@ out = {"structures": results, "cohort_mean": COHORT_MEAN,
        "rates": RATES}
 path = os.path.join(_HERE, "crop_protection_npv_regulation_test_results.json")
 with open(path, "w") as fh:
-    json.dump(out, fh, indent=2)
+    json.dump(_rounded(out), fh, indent=2)
 print(f"\n  written: {os.path.basename(path)}")

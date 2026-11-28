@@ -7,8 +7,8 @@
       "discount": 0.135,
       "life": 15,
       "plateau_years": 4,
-      "npv": -154.58072321184096,
-      "irr": -0.026571237960095008
+      "npv": -154.5807232118,
+      "irr": -0.026571238
     },
     "Cost-overrun mid-size": {
       "peak_sales": 200.0,
@@ -17,8 +17,8 @@
       "discount": 0.14,
       "life": 10,
       "plateau_years": 4,
-      "npv": -177.5463275619861,
-      "irr": -0.019824631378548625
+      "npv": -177.546327562,
+      "irr": -0.0198246314
     },
     "Blockbuster": {
       "peak_sales": 900.0,
@@ -27,68 +27,68 @@
       "discount": 0.11,
       "life": 18,
       "plateau_years": 7,
-      "npv": 547.6523609822626,
-      "irr": 0.25121597893881886
+      "npv": 547.6523609823,
+      "irr": 0.2512159789
     }
   },
-  "breakeven_npv_zero_peak_sales": 508.5082854160768,
-  "breakeven_15pct_irr_peak_sales": 595.7690903759226,
+  "breakeven_npv_zero_peak_sales": 508.5082854161,
+  "breakeven_15pct_irr_peak_sales": 595.7690903759,
   "irr_breakeven_by_dev_cost": {
-    "260": 511.53127237317483,
-    "280": 547.3771523743442,
-    "301": 585.0153263755719,
-    "307": 595.7690903759226,
-    "320": 619.0689123766826,
-    "350": 672.8377323784366
+    "260": 511.5312723732,
+    "280": 547.3771523743,
+    "301": 585.0153263756,
+    "307": 595.7690903759,
+    "320": 619.0689123767,
+    "350": 672.8377323784
   },
   "irr_breakeven_by_margin": {
-    "0.35": 680.878960429626,
-    "0.40": 595.7690903759226,
-    "0.45": 529.5725247785979,
-    "0.50": 476.61527230073807,
-    "0.55": 433.2866111824892
+    "0.35": 680.8789604296,
+    "0.40": 595.7690903759,
+    "0.45": 529.5725247786,
+    "0.50": 476.6152723007,
+    "0.55": 433.2866111825
   },
   "npv_zero_breakeven_by_discount": {
-    "0.080": 277.3463230112883,
-    "0.085": 293.63442445729584,
-    "0.090": 310.74145466198536,
-    "0.100": 347.55539504655815,
-    "0.110": 388.10181513483974,
-    "0.120": 432.8359698558977,
-    "0.135": 508.5082854160768,
-    "0.150": 595.7690903759235
+    "0.080": 277.3463230113,
+    "0.085": 293.6344244573,
+    "0.090": 310.741454662,
+    "0.100": 347.5553950466,
+    "0.110": 388.1018151348,
+    "0.120": 432.8359698559,
+    "0.135": 508.5082854161,
+    "0.150": 595.7690903759
   },
-  "irr_breakeven_with_5pct_royalty": 680.8789604296257,
+  "irr_breakeven_with_5pct_royalty": 680.8789604296,
   "cost_structure": {
     "0.0850": {
-      "published_spec": 293.63442445729584,
-      "nwc_corteva_35pct": 321.4973295220726,
-      "nwc_corteva_35pct_with_tax_shield": 320.7239396025543,
-      "nwc_corteva_35pct_shield_rdexpensed": 279.5873713267521
+      "published_spec": 293.6344244573,
+      "nwc_corteva_35pct": 321.4973295221,
+      "nwc_corteva_35pct_with_tax_shield": 320.7239396026,
+      "nwc_corteva_35pct_shield_rdexpensed": 279.5873713268
     },
     "0.1350": {
-      "published_spec": 508.5082854160768,
-      "nwc_corteva_35pct": 585.9505046744111,
-      "nwc_corteva_35pct_with_tax_shield": 585.7478817454175,
-      "nwc_corteva_35pct_shield_rdexpensed": 492.9026949097412
+      "published_spec": 508.5082854161,
+      "nwc_corteva_35pct": 585.9505046744,
+      "nwc_corteva_35pct_with_tax_shield": 585.7478817454,
+      "nwc_corteva_35pct_shield_rdexpensed": 492.9026949097
     },
     "0.1500": {
-      "published_spec": 595.7690903759235,
-      "nwc_corteva_35pct": 696.7773498837041,
-      "nwc_corteva_35pct_with_tax_shield": 696.7534134331163,
-      "nwc_corteva_35pct_shield_rdexpensed": 581.9288473029706
+      "published_spec": 595.7690903759,
+      "nwc_corteva_35pct": 696.7773498837,
+      "nwc_corteva_35pct_with_tax_shield": 696.7534134331,
+      "nwc_corteva_35pct_shield_rdexpensed": 581.928847303
     }
   },
   "working_capital_range": {
     "Corteva 35%": {
-      "irr_hurdle": 696.7773498837034,
-      "irr_hurdle_shield_expensed": 581.9288473029692
+      "irr_hurdle": 696.7773498837,
+      "irr_hurdle_shield_expensed": 581.928847303
     },
     "FMC 72%": {
-      "irr_hurdle": 848.1870460295515,
-      "irr_hurdle_shield_expensed": 708.4063034025862
+      "irr_hurdle": 848.1870460296,
+      "irr_hurdle_shield_expensed": 708.4063034026
     }
   },
-  "irr_hurdle_without_separate_scaleup": 576.4027297762275,
-  "irr_hurdle_at_15pct": 595.7690903759226
+  "irr_hurdle_without_separate_scaleup": 576.4027297762,
+  "irr_hurdle_at_15pct": 595.7690903759
 }

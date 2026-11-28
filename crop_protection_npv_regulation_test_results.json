@@ -1,56 +1,56 @@
 {
   "structures": {
     "baseline (as published)": {
-      "npv_zero_at_0.085": 293.63442445729584,
-      "npv_zero_at_0.135": 508.5082854160768,
-      "npv_zero_at_0.150": 595.7690903759235,
-      "irr_15pct_hurdle": 595.7690903759226
+      "npv_zero_at_0.085": 293.6344244573,
+      "npv_zero_at_0.135": 508.5082854161,
+      "npv_zero_at_0.150": 595.7690903759,
+      "irr_15pct_hurdle": 595.7690903759
     },
     "free registration": {
-      "npv_zero_at_0.085": 274.22647510990396,
-      "npv_zero_at_0.135": 481.22769898803745,
-      "npv_zero_at_0.150": 565.8024979582292,
-      "irr_15pct_hurdle": 565.8024979582283
+      "npv_zero_at_0.085": 274.2264751099,
+      "npv_zero_at_0.135": 481.227698988,
+      "npv_zero_at_0.150": 565.8024979582,
+      "irr_15pct_hurdle": 565.8024979582
     },
     "1995-speed calendar": {
-      "npv_zero_at_0.085": 262.3034201649457,
-      "npv_zero_at_0.135": 422.3761854476254,
-      "npv_zero_at_0.150": 483.7542470924477,
-      "irr_15pct_hurdle": 483.75424709244714
+      "npv_zero_at_0.085": 262.3034201649,
+      "npv_zero_at_0.135": 422.3761854476,
+      "npv_zero_at_0.150": 483.7542470924,
+      "irr_15pct_hurdle": 483.7542470924
     },
     "approval wait removed (R&D fixed)": {
-      "npv_zero_at_0.085": 263.60373071783215,
-      "npv_zero_at_0.135": 428.76581169607346,
-      "npv_zero_at_0.150": 493.0079010085158,
-      "irr_15pct_hurdle": 493.007901008515
+      "npv_zero_at_0.085": 263.6037307178,
+      "npv_zero_at_0.135": 428.7658116961,
+      "npv_zero_at_0.150": 493.0079010085,
+      "irr_15pct_hurdle": 493.0079010085
     },
     "both": {
-      "npv_zero_at_0.085": 243.4287140523674,
-      "npv_zero_at_0.135": 396.1767802643027,
-      "npv_zero_at_0.150": 455.098305290672,
-      "irr_15pct_hurdle": 455.0983052906714
+      "npv_zero_at_0.085": 243.4287140524,
+      "npv_zero_at_0.135": 396.1767802643,
+      "npv_zero_at_0.150": 455.0983052907,
+      "irr_15pct_hurdle": 455.0983052907
     },
     "both, plus approval wait removed": {
-      "npv_zero_at_0.085": 223.40884257024675,
-      "npv_zero_at_0.135": 346.557253567061,
-      "npv_zero_at_0.150": 392.4207288514691,
-      "irr_15pct_hurdle": 392.4207288514684
+      "npv_zero_at_0.085": 223.4088425702,
+      "npv_zero_at_0.135": 346.5572535671,
+      "npv_zero_at_0.150": 392.4207288515,
+      "irr_15pct_hurdle": 392.4207288515
     }
   },
   "cohort_mean": 48.6,
   "cohort_implied_peak": 121.5,
-  "gap_closure_vs_revenue": 0.2570883252718202,
-  "gap_closure_vs_implied_peak": 0.29660542493661246,
+  "gap_closure_vs_revenue": 0.2570883253,
+  "gap_closure_vs_implied_peak": 0.2966054249,
   "gap_closure_range_vs_revenue": [
     0.0,
-    0.37163715038206446
+    0.3716371504
   ],
   "gap_closure_range_vs_implied_peak": [
     0.0,
-    0.4287615736527822
+    0.4287615737
   ],
   "baseline_total_cash_outflow": 383.0,
-  "registration_cost_removed": 35.11437908496732,
+  "registration_cost_removed": 35.114379085,
   "rates": [
     0.085,
     0.135,

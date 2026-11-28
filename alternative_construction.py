@@ -270,6 +270,26 @@ def bridge_hurdle(*, margin: float, tax: float, life: int, erosion: float,
     return (lo + hi) / 2.0
 
 
+
+def _rounded(obj, ndigits=10):
+    """Round every float in a results structure to a fixed precision.
+
+    The published JSON files are artefacts that reviewers may re-run and
+    compare byte-for-byte. Floating-point arithmetic is not bit-reproducible
+    across interpreter and library builds, so the last few digits of a
+    result can differ between two runs of the same code on the same
+    machine. Rounding at the point of serialisation removes that noise
+    without touching any value the model actually computes: at ten decimal
+    places these are dollar-million figures quoted to the cent.
+    """
+    if isinstance(obj, dict):
+        return {k: _rounded(v, ndigits) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_rounded(v, ndigits) for v in obj]
+    if isinstance(obj, float):
+        return round(obj, ndigits)
+    return obj
+
 if __name__ == "__main__":
     h = hurdle()
     # The published model's hurdle, for the spread.
@@ -401,5 +421,5 @@ if __name__ == "__main__":
     }
     path = os.path.join(_HERE, "alternative_construction_results.json")
     with open(path, "w") as fh:
-        json.dump(out, fh, indent=2)
+        json.dump(_rounded(out), fh, indent=2)
     print(f"\nResults written to {path}")
