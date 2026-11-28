@@ -776,7 +776,8 @@ def main() -> None:
 
     for n, s in SCENARIOS.items():
         pairs = cashflow_pairs(s["peak_sales"], s["dev_cost"], s["ebit_margin"],
-                               s["tax"], s["life"])
+                               s["tax"], s["life"],
+                               plateau_years=s.get("plateau_years", 4))
         r = irr_of(pairs)
         assert r is not None, f"{n}: IRR undefined"
         npv_at_irr = npv_of(pairs, r)
