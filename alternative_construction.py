@@ -1,84 +1,23 @@
 #!/usr/bin/env python3
 """
-An alternative construction of the same model, from the same cost base.
+Alternative DCF construction from the same $307m AgbioInvestor cost base.
 
-Why this exists
----------------
-The published model (crop_protection_npv.py) produces a peak-sales hurdle of
-about $596m for a 15% IRR at the survey's $307m development cost. That number
-depends on the structure of the model, not only on the cost base and the
-revenue path. A reader is entitled to know whether the result is an artefact
-of the particular structure chosen.
+Tests how much the 15% IRR peak-sales hurdle moves when rebuilt under a
+different set of defensible structural assumptions ($696m vs. $596m in
+crop_protection_npv.py), and decomposes the $101m spread into an exact
+seven-step sequential waterfall:
+  1. Even 10-year pre-launch spend (launch at t=10) vs. uneven 11-year phases
+  2. No separate post-launch cost lines ($0m vs. $76m)
+  3. Post-peak erosion of 25%/yr vs. 15%/yr
+  4. Commercial life of 10 years vs. 15 years
+  5. Operating contribution of 35% vs. 40%
+  6. Tax rate of 25% vs. 21%
+  7. No net operating loss carry-forward vs. loss carry-forward
 
-This is that test. It is a genuinely different construction, not a parameter
-change to the same one, and it is written out in full so it can be checked.
-
-WHAT IS AND IS NOT DIFFERENT
------------------------------
-An earlier version of this script changed several things at once, and one of
-them was not disclosed: it spent the $307m evenly over TEN pre-launch years
-and launched at t=10, while the published model spends it over an uneven
-ELEVEN-year schedule and launches at t=11. That undisclosed timing change
-alone moves the answer materially, because spending the same money earlier
-raises its present value.
-
-This version therefore does two things the earlier one did not:
-
-  1. It STATES the timing difference explicitly, and prices it.
-
-  2. It reports the spread as an EXACT SEQUENTIAL WATERFALL: from the
-     published model's assumptions to this construction's, one assumption
-     group per rung, with each rung's delta summing exactly to the spread.
-     The first rung is asserted to reproduce the published model's hurdle
-     and the last to reproduce this construction's, so the waterfall cannot
-     silently drift away from either model it is describing.
-
-An earlier version of the decomposition was reported in two lines. Both
-labels were wrong: one line changed five assumptions at once while claiming
-to change two, and the other changed the margin alone while claiming to
-change the margin and the tax. A decomposition whose labels do not match
-what it does is worse than no decomposition, so the two-line version was
-replaced with the waterfall.
-
-The assumptions, all of which a reader might reasonably make and none of
-which is "the right answer":
-
-  published model          five pre-launch phases carrying the survey's
-                           function totals on an 11-year calendar, $307m of
-                           pre-launch cash, post-launch launch marketing,
-                           manufacturing scale-up and stewardship charged in
-                           the commercial years, development spend amortised
-                           over the commercial life, 40% operating
-                           contribution, 21% tax, 15-year life, losses
-                           carried forward and offset against later profits.
-
-  this construction        the whole $307m treated as capitalised development
-                           spend with NO separate post-launch cost lines,
-                           amortised over a 10-year commercial life rather
-                           than 15, 35% operating contribution rather than
-                           40%, 25% tax rather than 21%, a steeper
-                           post-peak decline - revenue erodes at 25% of peak
-                           a year rather than 15%, which is closer to what
-                           happens to a product once generics arrive - and no
-                           loss carry-forward, so an early commercial-year
-                           loss is never offset against later profits.
-
-Run it:
-
+Usage:
     python3 alternative_construction.py
 
-Results are written to alternative_construction_results.json.
-
-WHAT THIS DOES NOT SHOW
------------------------
-A wide spread between two constructions is a statement about how much the
-answer depends on assumptions that are not observable. It is not evidence
-that either construction is the industry. A third construction would move the
-answer again, and a set of matched product-level observations would be worth
-more than any number of constructions.
-
-The waterfall below says which assumption is doing the work. It does not say
-which assumption is right.
+Writes results to alternative_construction_results.json.
 """
 import importlib.util
 import json
@@ -272,16 +211,7 @@ def bridge_hurdle(*, margin: float, tax: float, life: int, erosion: float,
 
 
 def _rounded(obj, ndigits=10):
-    """Round every float in a results structure to a fixed precision.
-
-    The published JSON files are artefacts that reviewers may re-run and
-    compare byte-for-byte. Floating-point arithmetic is not bit-reproducible
-    across interpreter and library builds, so the last few digits of a
-    result can differ between two runs of the same code on the same
-    machine. Rounding at the point of serialisation removes that noise
-    without touching any value the model actually computes: at ten decimal
-    places these are dollar-million figures quoted to the cent.
-    """
+    """Round floats at serialisation so JSON outputs are byte-reproducible."""
     if isinstance(obj, dict):
         return {k: _rounded(v, ndigits) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):

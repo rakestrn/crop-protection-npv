@@ -1,97 +1,22 @@
 #!/usr/bin/env python3
 """
-Regulation counterfactuals for the crop-protection NPV model.
+Regulatory cost and delay counterfactuals for the crop-protection NPV model.
 
-The question: does the hurdle a new active ingredient has to clear depend on
-the regulatory regime, or is it determined by the economics alone?
+Compares six pre-launch structures on the base-case parameters ($307m R&D,
+40% operating contribution, 21% tax, 15-year commercial life):
+  1. baseline (as published)          survey cost and 11-year timeline
+  2. free registration                $35m registration phase removed at t=9.5-11.0
+  3. 1995-speed calendar              pre-launch calendar compressed to 8.3 years
+  4. approval wait removed            R&D budgets unchanged; dossier prepared
+                                      concurrently with late field trials (t=8.0-9.5)
+                                      and product launched at t=9.5
+  5. both                             free registration + 1995-speed calendar
+  6. both, plus approval wait removed free registration + 1995 calendar + launch at t=7.17
 
-Six structures are compared, all on the base-case parameters:
-
-  baseline (as published)   the survey cost and timeline, unchanged
-  free registration          the $35m registration dossier cost removed, at
-                             the registration phase's own timing
-  1995-speed calendar        the pre-launch calendar compressed to the
-                             1995 lead time of 8.3 years
-  approval wait removed      the R&D programme and its costs unchanged, the
-                             launch brought forward, with the dossier
-                             prepared before the launch date
-  both of those at once
-  both, plus the approval wait removed
-
-Two hurdles are reported for each, and they are different quantities:
-
-  NPV = 0 hurdle      depends on the discount rate
-  IRR = 15% hurdle    discount-rate independent by construction
-
-Run it:
-
+Usage:
     python3 regulation_test.py
 
-Results are written to crop_protection_npv_regulation_test_results.json.
-
-WHAT THIS TEST DOES AND DOES NOT SHOW
--------------------------------------
-It removes ONE cost category - the registration dossier - and compresses ONE
-calendar. It does not remove regulation. The AgbioInvestor study places
-regulatory activity inside the development phase as well as inside
-registration: registration field trials alone ran at $30.4m in 2020-23, and
-the study's own definition of "Product Launch & Development" covers
-"all regulatory costs linked to product launch, label expansions and product
-defence". A shorter approval queue also has effects this model does not
-estimate: a denied application, a lost indication, a delayed cash receipt,
-an abandoned programme, or geographic exclusion from a market.
-
-So the honest reading of the result is narrow: removing the registration
-dossier and compressing the calendar does not rescue the assumed small-product
-case. It is not a finding that regulation is unimportant, and the scenario
-below is not a free-registration regime.
-
-HOW THE TWO CHANNELS ARE NOW IMPLEMENTED
------------------------------------------
-An earlier version of this script described interventions it did not perform,
-and an external review of the published code found it. Both are fixed here.
-
-  * "FREE REGISTRATION" REMOVED THE WRONG MONEY. It lowered the total
-    development cost and let the schedule scale every phase down pro rata, so
-    roughly $31m of the $35m saving came out of discovery and research rather
-    than registration - and post-launch marketing, scale-up and stewardship
-    fell as well, because they scaled with the same total. The removal is now
-    phase-specific: the registration phase's cost goes to zero, every other
-    phase keeps its budget, and the post-launch cost lines are held fixed at
-    their reference amounts because they are commercial-spend assumptions,
-    not functions of the registration dossier. The saving also lands at the
-    registration phase's own timing, which is late in the programme and
-    therefore discounted more heavily than an equivalent early saving.
-
-  * "1995-SPEED CALENDAR" MOVED REVENUE TWO YEARS, NOT 2.7. The engine ran on
-    whole-year periods, so compressing the phase calendar to 8.3 years
-    actually launched the product two years earlier than the baseline while
-    the text claimed 2.7 - and a third variant launched commercial sales
-    three years before the registration dossier was finished, which is not
-    what removing an approval queue looks like. The engine now carries
-    continuous time, so the calendar compresses to exactly 8.3 years and
-    first revenue arrives 2.7 years earlier, as stated. There is no longer a
-    case in which the product sells before registration is finished.
-
-COMPRESSING THE CALENDAR ALSO MOVES SPEND
-------------------------------------------
-Compressing the calendar pulls spending forward, and money spent earlier is
-discounted less. That effect raises the hurdle rather than lowering it, and
-it is not about regulation at all: the same work would cost more in present
-value if it were done faster. The model lets it happen rather than assuming
-compression is free, which is why the compressed-calendar case is not
-automatically the more favourable one.
-
-THE $700m QUESTION
--------------------
-An earlier version of this piece also published a second, independently
-written construction of the same model from the same $307m cost base, which
-produced a breakeven of about $700m for the same 15% hurdle. The comparison
-was worth making - it showed the result is not structure-invariant - but it
-was presented without publishing that construction, so a reader could not
-check it. The alternative model is therefore published here as
-alternative_construction.py, with its assumptions stated, and the article
-points to it directly rather than asserting internal consistency.
+Writes results to crop_protection_npv_regulation_test_results.json.
 """
 import importlib.util
 import json
@@ -108,57 +33,24 @@ PEAK, COST = BASE["peak_sales"], BASE["dev_cost"]
 MARGIN, TAX, DISC, LIFE = (BASE["ebit_margin"], BASE["tax"],
                             BASE["discount"], BASE["life"])
 
-# Mean realised revenue per active ingredient for the ten new actives
-# launched in 2010, measured on their 2022 revenue.
+# 2010 launch cohort benchmark: $48.6m average 2022 revenue (year 12), which
+# implies $121.5m peak sales at year-12 penetration of 0.40.
 COHORT_MEAN = 48.6
-
-# The cohort figure above is revenue in a single late year (2022), twelve
-# years after launch, not peak annual sales. Applying this model's own
-# average revenue path to the cohort - year-12 penetration of 0.40 - gives
-# implied peak sales per active ingredient of about $121m. Both comparisons
-# are printed below: the headline multiple uses realised revenue, the
-# like-for-like multiple uses implied peak.
 IMPLIED_COHORT_PEAK = COHORT_MEAN / m.PENETRATION[12]
 
-# Registration is $35m of the $307m survey total.
 REGISTRATION_COST = 35.0
-
-# The 1995 lead time, and the model's own development period.
 LEAD_1995 = m.LEAD_1995
 DEV_YEARS = m.DEV_YEARS
-
-# Compressing the calendar scales the phase starts and durations together.
-# The engine carries continuous time, so first revenue arrives at exactly
-# 8.3 years rather than at a rounded whole period.
 LEAD_SCALE = LEAD_1995 / DEV_YEARS
 
-# Phase costs with the registration phase removed. Every other phase keeps
-# its budget; the saving lands at the registration phase's own timing.
 COSTS_NO_REG = m.phase_costs_without_registration(COST)
-
-# The registration phase's cost is scaled with the total, so the amount
-# actually removed is the scaled figure.
 REG_REMOVED = (m.scaled_phase_costs(COST)[m.REGISTRATION_PHASE_INDEX]
                - COSTS_NO_REG[m.REGISTRATION_PHASE_INDEX])
 
-# The approval-wait case: the R&D programme is untouched - same five phases,
-# same budgets, same total - but the product launches when the dossier is
-# filed at the end of the field-trials and toxicology phase, instead of
-# waiting for the registration phase to run. Registration cost is still paid;
-# what is removed is the queue between dossier and authorisation. This is
-# the most generous version of the case, and it is an upper bound rather
-# than a forecast: no source measures the split between dossier preparation
-# and regulatory review inside the registration phase.
-#
-# For that to be coherent the dossier has to be PREPARED before it is
-# filed, so in this case the registration phase runs concurrently with the
-# final 1.5 years of the field-trials and toxicology phase (t=8.0 to 9.5)
-# rather than after it (t=9.5 to 11.0). The phase budget is unchanged; only
-# its timing moves. An earlier version of this script left the registration
-# phase where it was, which left $23.41m of registration spend falling after
-# the product had already launched. The assertion below now catches that.
+# Approval-wait counterfactual: dossier prepared concurrently with the final
+# 1.5 years of field trials/toxicology (t=8.0 to 9.5) and product launched at
+# t=9.5 so no pre-launch spend falls after launch.
 APPROVAL_WAIT_LAUNCH = 9.5
-
 PHASES_NO_APPROVAL_WAIT = list(m.PHASES)
 PHASES_NO_APPROVAL_WAIT[m.REGISTRATION_PHASE_INDEX] = (8.0, 1.5, 35.0)
 
@@ -391,16 +283,7 @@ print("  weak industry returns caused by regulation.")
 
 
 def _rounded(obj, ndigits=10):
-    """Round every float in a results structure to a fixed precision.
-
-    The published JSON files are artefacts that reviewers may re-run and
-    compare byte-for-byte. Floating-point arithmetic is not bit-reproducible
-    across interpreter and library builds, so the last few digits of a
-    result can differ between two runs of the same code on the same
-    machine. Rounding at the point of serialisation removes that noise
-    without touching any value the model actually computes: at ten decimal
-    places these are dollar-million figures quoted to the cent.
-    """
+    """Round floats at serialisation so JSON outputs are byte-reproducible."""
     if isinstance(obj, dict):
         return {k: _rounded(v, ndigits) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):

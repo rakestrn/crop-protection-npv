@@ -1,240 +1,52 @@
 #!/usr/bin/env python3
 """
-What a new crop-protection active ingredient is worth.
+Discounted cash-flow model of a single new crop-protection active ingredient.
 
-A small, transparent financial model of a single new active substance (AI),
-built to answer one question: what peak annual sales does a new AI have to
-reach before it clears a normal corporate hurdle rate?
+Solves for the peak annual sales a new conventional active ingredient needs to
+clear a stated required return, using the functional cost structure from the
+AgbioInvestor / CropLife International survey (May 2026: $307m and 11.4 years
+for the 2020-2023 launch cohort across BASF, Bayer, Corteva, FMC and Syngenta).
 
-The model is deliberately plain. Every input is stated, every assumption is
-named, and the breakeven solves are visible in the code rather than hidden in
-one place. If you disagree with an assumption you can change it and see what it
-does to the answer.
-
-Run it:
-
+Usage:
     python3 crop_protection_npv.py
 
-Results are written to crop_protection_npv_model_results.json.
+Writes results to crop_protection_npv_model_results.json.
 
-INPUTS AND WHERE THEY COME FROM
--------------------------------
-Development cost, timeline          AgbioInvestor for CropLife International,
-                                    "Time and Cost of New Agrochemical
-                                    Product Discovery, Development and
-                                    Registration" (May 2026). A survey of
-                                    BASF Agricultural Solutions, Bayer Crop
-                                    Science, Corteva, FMC and Syngenta, on
-                                    the 2020-2023 launch cohort. The survey
-                                    reports the AVERAGE total cost of
-                                    discovering, developing and registering
-                                    one new AI across its respondents:
-                                    $307m, up from $301m for 2014-2019. This
-                                    is a mean, not a median, and the model
-                                    does not use it to infer a distribution
-                                    of programme costs.
-
-Cost bridge, survey to cash        The survey reports the cost of a new AI by
-                                    function, not by year. The five phases
-                                    below carry those function totals:
-                                    research $133m (chemistry $75m, biology
-                                    $46m, toxicology/environmental chemistry
-                                    $12m), development $138m (chemistry $32m,
-                                    field trials $59m, toxicology $23m,
-                                    environmental chemistry $24m) and
-                                    registration $35m. The survey does not
-                                    say when any of that money is spent, so
-                                    the calendar below is this model's
-                                    assumption, not the survey's. What is
-                                    the survey's is the total and its
-                                    division across functions.
-
-Post-launch cash                   Launch marketing, manufacturing scale-up
-                                    and post-launch stewardship are real
-                                    programme costs, but they are NOT part
-                                    of the survey's $307m and they are not
-                                    sourced from the survey either. They are
-                                    this model's own assumptions, stated so
-                                    they can be changed: $25m of launch
-                                    marketing, $30m of manufacturing
-                                    scale-up, and $21m of post-launch
-                                    stewardship, spread over the first
-                                    four commercial years. These are held
-                                    FIXED at those amounts in every case,
-                                    including the regulatory counterfactuals:
-                                    they are commercial-spend assumptions,
-                                    not functions of the registration
-                                    dossier, so a change in one must not
-                                    move the others.
-
-                                    Total programme cash is therefore about
-                                    $383m - roughly 25% more than the
-                                    survey's cost-to-market figure, and the
-                                    reader should treat the two as different
-                                    things rather than one number.
-
-                                    Note also that the survey's own
-                                    development total already includes a
-                                    scale-up-of-manufacture component, so
-                                    the separate $30m line here may overlap
-                                    with it. The model prints the hurdle
-                                    with that line removed so the size of
-                                    the possible overlap is visible.
-
-Revenue shape                      Ramp to full penetration over five
-                                    commercial years, hold for four, then
-                                    lose 15 PERCENTAGE POINTS of peak sales
-                                    per year to zero over the remaining
-                                    commercial life. This is an assumption.
-                                    No observed cohort of new actives is used
-                                    to calibrate it, and the article does
-                                    not use this curve to estimate what any
-                                    individual product earned.
-
-Exclusivity                        Not modelled. The revenue path is a fixed
-                                    ramp, plateau and erosion schedule, so
-                                    shortening the development calendar does
-                                    not extend the protected commercial
-                                    period, and the originator's post-expiry
-                                    tail is not estimated. A faster approval
-                                    therefore pulls revenue forward in this
-                                    model; it does not earn extra protected
-                                    revenue. Real originators harvest cash
-                                    from off-patent franchises for years
-                                    after exclusivity ends, so this model
-                                    understates the cash available to a
-                                    franchise that has one.
-
-Operating contribution              Gross margin of 58% less SG&A of 18%, or
-                                    40% at peak for the base case. This is
-                                    operating contribution BEFORE deducting
-                                    R&D amortisation, and it is not
-                                    comparable to reported segment EBIT or
-                                    EBITDA margins. It is an assumption with
-                                    no product-level evidence behind it.
-
-Tax                                21% on taxable profit. Losses are carried
-                                    forward and offset against later
-                                    profits, so a programme that loses
-                                    money early recovers the deduction
-                                    later rather than losing it forever.
-                                    The "group tax shield" scenario instead
-                                    offsets development spend immediately
-                                    against profit elsewhere in a
-                                    multinational's accounts. The 21% rate
-                                    and the availability of a group offset
-                                    are assumptions about tax treatment,
-                                    not facts about any named company.
-
-Cost of capital                    13.5% for the base case, 15% for the
-                                    corporate hurdle test, 8.5% as a
-                                    deliberately low case. All three are
-                                    assumptions, not observed industry
-                                    rates - the model prints the hurdle
-                                    across a range so the reader can see how
-                                    much the choice moves.
-
-Commercial life                    15 years in the base case, 18 in the
-                                    blockbuster case, 10 in the
-                                    cost-overrun case. Development spend is
-                                    amortised over the same period.
+KEY INPUTS AND ASSUMPTIONS
+--------------------------
+- Pre-launch R&D ($307m over an 11-year, 5-phase schedule): carries the
+  survey's functional totals — research $133m (biology $46m, chemistry $75m,
+  tox/env $12m), development $138m (chemistry $32m, field trials $59m,
+  toxicology $23m, environmental chemistry $24m) and registration $35m.
+  Phase timing is this model's assumption; functional totals are the survey's.
+- Post-launch cash ($76m, model assumption): $25m launch marketing (year 0,
+  expensed), $30m manufacturing scale-up (year 0, depreciated straight-line
+  over 5 years; also tested at $0m because the survey's development bucket
+  includes a $23.3m scale-up item), and $21m stewardship (years 0-3, expensed).
+  Total programme cash is $383m.
+- Revenue trajectory: 5-year linear ramp (20% to 84% of peak), 4-year plateau
+  at 100%, then 15 percentage points of peak lost per year over a 15-year
+  commercial life (with alternative trajectory shapes tested in main()).
+- Operating contribution & tax: 40% at peak before R&D amortisation (58% gross
+  margin less 18% SG&A); 21% tax on EBIT with net operating loss carry-forward
+  (plus a multinational group-tax-shield and immediate-R&D-expensing test).
+- Discount rates: 7.5%-10.5% after-tax cost-of-capital range (8.5% and 9.0%
+  highlighted), 13.5% legacy scenario rate, and 15.0% corporate IRR hurdle.
 
 REVISION HISTORY
 ----------------
-An earlier version of this model produced numbers that could not be quoted.
-The corrections that matter, all of which moved the result AGAINST the
-conclusion rather than in its favour:
-
-  * The commercial-year loop ran one period too long, so the cost-overrun
-    case earned revenue in eleven commercial years against a ten-year
-    amortisation life.
-
-  * Phase start times were read off year labels and used as elapsed time from
-    discovery start. Every phase sat a year late and the final phase was
-    truncated at the horizon, dropping $36m of the $250m pre-launch budget.
-    Correcting it raises the hurdle.
-
-  * Tax was applied to revenue rather than to EBIT, and the free-cash-flow
-    factor was applied to peak EBIT rather than to NOPAT.
-
-  * A probability-of-success multiplier was applied to revenue and cost
-    alike. That is not a risk-adjusted NPV: it cannot change the zero-NPV
-    hurdle and it understates losses by treating the cost of failed programmes
-    as though it were never incurred. The survey cost is already
-    attrition-inclusive - the questionnaire asks for the total cost of
-    synthesising and screening every molecule needed to yield one successful
-    launch - so applying a second failure haircut double-counts. The
-    probability rows have been removed rather than kept as diagnostics,
-    because a diagnostic row that cannot change a decision invites being
-    read as if it could.
-
-  * "Effective IP protection" was a circular reference to its own cell, and
-    the peak margin line subtracted dollar values of revenue from percentage
-    values, producing a 74.24% margin on a 40% business.
-
-  * THE PRE-LAUNCH SCHEDULE DID NOT SUM TO THE AMORTISED COST. The five
-    phases carried a $250m reference budget scaled to about $255m, while the
-    amortisation base was the full $307m dev_cost. The difference - about
-    $52m - was charged to cash in one treatment and not in the other, so in
-    the capitalised base case the programme took a tax shield on cash it never
-    paid. The phases are now built from the survey's own function totals and
-    the pre-launch schedule sums to exactly the amortised cost. The model now
-    asserts this in its self-checks, and asserts that a capitalised and an
-    expensed treatment give identical cash at zero tax, which they did not
-    before.
-
-  * THE EXPLANATION OF THE EXPENSING SCENARIO WAS WRONG. The earlier version
-    said the benefit came from "removing the amortisation charge". The code
-    already adds non-cash amortisation back into free cash flow, so no cash
-    is created by dropping a book charge. The real difference is WHEN the
-    deduction is taken and WHETHER there is profit elsewhere in the group to
-    offset it against. At zero tax the two treatments are now identical, as
-    they must be.
-
-  * THE REGULATORY COUNTERFACTUALS DID NOT DO WHAT THEY SAID. The "free
-    registration" case lowered the total development cost and let the
-    schedule scale every phase down pro rata, so roughly $31m of the $35m
-    saving came out of DISCOVERY AND RESEARCH, not registration - and
-    post-launch marketing, scale-up and stewardship fell as well, because
-    they scaled with the same total. The "1995-speed calendar" case was
-    described as bringing first revenue forward 2.7 years but the engine ran
-    on whole-year periods and moved it two years. A third case launched
-    commercial sales three years before the registration dossier was
-    finished, which is not what removing an approval queue looks like. All
-    three are fixed below: removal is now phase-specific and at the removed
-    phase's own timing, post-launch spend is held fixed, the calendar is
-    compressed to the 1995 benchmark with continuous timing so the stated
-    acceleration is the one implemented, and there is no case in which
-    selling precedes registration.
-
-  * POST-LAUNCH SPEND NOW RECEIVES A TAX DEDUCTION. Launch marketing and
-    stewardship were previously deducted after tax, and scale-up was neither
-    expensed nor depreciated. They are now expensed before tax (marketing and
-    stewardship) and depreciated straight-line over five years (scale-up),
-    which is the treatment a real programme would receive.
-
-  * LOSSES NOW CARRY FORWARD. A programme that loses money in its early
-    commercial years previously lost the deduction permanently. It now
-    carries the loss forward and offsets it against later profit.
-
-One correction runs the other way and is worth stating for the same reason:
-the 15% IRR hurdle is discount-rate independent by construction. The IRR of
-a cash-flow vector does not depend on the rate at which you discount it, so
-the hurdle survives any change in cost of capital, while the NPV-zero hurdle
-does not. Both are reported, and they are different quantities. A project
-can clear a corporate capital-rationing hurdle and still create value at a
-lower required return.
-
-WHAT THIS MODEL DELIBERATELY DOES NOT DO
-----------------------------------------
-It is a single-product model, not a portfolio model. It does not attempt
-risk-adjusted NPV in the stage-gated (rNPV) sense, because that requires
-calibrating phase-by-phase probabilities, which the published survey does not
-support. It uses one average development programme, not a distribution of
-programmes. It does not model patent expiry, post-expiry branded cash flows,
-mixture or formulation extension, jurisdictional differences in net revenue
-to the originator, or the difference between an originator's discovery
-decision and an investor's entry decision.
+Corrections from the initial spreadsheet version (full details in README.md):
+- Commercial loop fixed to `life` years (was `life + 1`); phase starts indexed
+  from t=0 with ceiling horizon buckets so no pre-launch spend is truncated.
+- Pre-launch phase budgets sum to the $307m amortised cost (enforced by
+  self-check, along with the zero-tax capitalised-vs-expensed cash identity).
+- Tax applied to EBIT after R&D amortisation, scale-up depreciation, launch
+  marketing and stewardship, with loss carry-forward; probability-of-success
+  scalar removed because the $307m survey cost already embeds technical
+  attrition.
+- Regulatory counterfactuals in regulation_test.py use phase-specific
+  registration removal, fixed post-launch costs, and continuous-time calendar
+  scaling.
 """
 from __future__ import annotations
 
@@ -243,37 +55,18 @@ import os
 
 # --------------------------------------------------------------- constants
 
-# Development period. Phases run from discovery (t=0) to the end of
-# registration (t=11).
-DEV_YEARS = 11
-
-# The survey's 2020-23 total cost of discovering, developing and registering
-# one new active ingredient, and the function split it reports.
-#
-#   research      $133m   (chemistry 75, biology 46, toxicology/env 12)
-#   development   $138m   (chemistry 32, field trials 59, tox 23, env 24)
-#   registration   $35m
-#   total         $307m
-#
-# The phases below carry these function totals. Their placement on the
-# calendar is this model's assumption; the totals are the survey's.
-SURVEY_TOTAL = 306.0
-
-# Reference total for the post-launch cost lines, which are not part of the
-# survey's $307m and are stated as this model's own assumptions. These are
-# held fixed in every case, including the regulatory counterfactuals.
+DEV_YEARS = 11          # pre-launch development period (t=0 to t=11)
+SURVEY_TOTAL = 306.0    # sum of the survey's rounded function components ($m)
 REFERENCE_DEV_COST = 306.0
 
-# Post-launch cost lines, in $m, at the reference programme size.
-LAUNCH_MARKETING = 25.0     # launch marketing, commercial year 0
-SCALEUP = 30.0              # manufacturing scale-up, commercial year 0
-SCALEUP_LIFE = 5            # straight-line depreciation over this many years
-STEWARD = 21.0              # post-launch stewardship, over the first 4 years
+# Post-launch cost lines ($m), held fixed across counterfactuals.
+LAUNCH_MARKETING = 25.0     # commercial year 0, expensed
+SCALEUP = 30.0              # commercial year 0, depreciated over SCALEUP_LIFE
+SCALEUP_LIFE = 5
+STEWARD = 21.0              # spread evenly over first STEWARD_YEARS years
 STEWARD_YEARS = 4
 
-# Development phases: (start t in years, duration in years, cost in $m).
-# Each phase carries whole survey function totals, so the phase costs sum to
-# SURVEY_TOTAL and the pre-launch schedule sums to the amortised cost.
+# Pre-launch phases: (start_year, duration_years, cost_$m).
 PHASES = [
     (0.0, 2.5, 46.0),   # Discovery & biological screening   (research: biology)
     (2.5, 2.5, 87.0),   # Lead optimisation & research chem  (research: chem + tox/env)
@@ -282,42 +75,23 @@ PHASES = [
     (9.5, 1.5, 35.0),   # Registration                      (registration)
 ]
 REGISTRATION_PHASE_INDEX = 4
-
-# The 1995 benchmark lead time from the same survey series.
-LEAD_1995 = 8.3
+LEAD_1995 = 8.3         # 1995 survey benchmark lead time (years)
 
 TAX = 0.21
 HURDLE_IRR = 0.15
 BASE_DISCOUNT = 0.135
 
-# Trade working capital as a percentage of revenue, computed from reported
-# balance sheets rather than assumed:
-#   Corteva, Inc. FY2025 Form 10-K: AR $4,881m + inventories $5,667m
-#     less AP $4,398m over revenue $17,401m = 35.3%
-#   FMC Corporation FY2025 Form 10-K: the same computation gives 72.4%,
-#     inflated by a pre-divestiture inventory build.
-# Both are whole-company ratios and both are run; neither is a point estimate
-# for the industry.
+# Trade working capital / revenue from FY2025 Form 10-K filings:
+#   Corteva: (AR $4,881m + Inv $5,667m - AP $4,398m) / Rev $17,401m = 35.3%
+#   FMC:     (AR $2,062m + Inv $1,220m - AP $771m)   / Rev $3,467m  = 72.4%
 CORTEVA_WC = 0.353
 FMC_WC = 0.724
 
-# Penetration by commercial year c: five years to full penetration, four
-# years at peak, then 15 percentage points of peak lost per year to zero.
+
 def penetration(c: int, plateau_years: int = 4, ramp_years: int = 5,
                 erosion_rate: float = 0.15) -> float:
-    """Penetration factor for commercial year c.
-
-    A linear ramp from 0.20 in launch year 0 across `ramp_years` years (for
-    the default 5-year ramp: 0.20, 0.36, 0.52, 0.68, 0.84), then
-    `plateau_years` at full penetration (1.00), then `erosion_rate` of peak
-    lost per year, floored at zero so revenue never books negative.
-
-    plateau_years=4, ramp_years=5, erosion_rate=0.15 reproduces the base case,
-    whose commercial life is fifteen years. A scenario with a longer commercial
-    life needs a longer plateau: with the erosion rule fixed, an eighteen-year
-    life reached zero revenue at year fifteen and left three of the eighteen
-    years earning nothing.
-    """
+    """Commercial-year penetration factor: linear ramp from 0.20 across
+    `ramp_years`, `plateau_years` at 1.00, then `erosion_rate` lost per year."""
     if c < ramp_years:
         return 0.20 + (0.80 / ramp_years) * c
     peak_end = ramp_years + plateau_years - 1
@@ -326,27 +100,19 @@ def penetration(c: int, plateau_years: int = 4, ramp_years: int = 5,
     return max(0.0, 1.0 - erosion_rate * (c - peak_end))
 
 
-# The base-case revenue path, derived from penetration() so the two cannot
-# drift apart. Fifteen commercial years: five ramping, four at peak, then
-# six years of erosion.
 PENETRATION = [penetration(c) for c in range(16)]
 
 
 # ------------------------------------------------------------------- costs
 
 def scaled_phase_costs(total: float) -> list[float]:
-    """Phase costs scaled so they sum to `total`."""
+    """Phase costs scaled proportionally to sum to `total`."""
     scale = total / sum(c for _, _, c in PHASES)
     return [c * scale for _, _, c in PHASES]
 
 
 def phase_costs_without_registration(total: float) -> list[float]:
-    """Phase costs scaled to `total` with the registration phase removed.
-
-    The saving comes out of the registration phase and nowhere else. This is
-    the whole point of the counterfactual: a registration dossier that is
-    cheaper or waived does not make discovery cheaper.
-    """
+    """Phase costs scaled to `total` with the registration phase zeroed out."""
     costs = scaled_phase_costs(total)
     costs[REGISTRATION_PHASE_INDEX] = 0.0
     return costs
@@ -356,25 +122,8 @@ def pre_launch_pairs(costs: list[float],
                      time_scale: float = 1.0,
                      phases: list[tuple[float, float, float]] | None = None
                      ) -> list[tuple[float, float]]:
-    """Pre-launch spend as (time in years, amount) pairs.
-
-    Each phase's cost is spread across the calendar years it overlaps, in
-    proportion to the overlap, so nothing is double-counted or back-loaded
-    and the schedule sums exactly to the phase budget.
-
-    `time_scale` compresses the whole calendar. 1.0 is the base case; a
-    smaller value compresses the programme toward the 1995 benchmark, which
-    is how the calendar counterfactual is built. Compressing moves spend
-    EARLIER, which raises its present value - the model lets that happen
-    rather than assuming compression is free.
-
-    `phases` overrides the phase calendar, keeping the phase budgets but
-    moving them in time. It is how a counterfactual that changes when the
-    registration work happens is built; the costs list stays in phase order.
-    """
-    # `costs` already holds the dollar amount for each phase, so no further
-    # scaling is applied here. (An earlier version scaled twice and produced a
-    # schedule that no longer summed to the amortised cost.)
+    """Allocate phase costs into annual calendar buckets as (year, amount)
+    pairs, supporting continuous-time calendar compression via `time_scale`."""
     active = PHASES if phases is None else phases
     horizon = max(s + d for s, d, _ in active) * time_scale
     buckets = int(-(-horizon // 1))          # ceiling, so the tail is kept
@@ -387,8 +136,6 @@ def pre_launch_pairs(costs: list[float],
             overlap = max(0.0, min(s0 + d0, hi) - max(s0, lo))
             if overlap > 0:
                 sched[b] += cost * (overlap / d0)
-    # Each calendar year's spend is placed at the start of that year, which
-    # is the model's timing convention.
     return [(float(b), sched[b]) for b in range(buckets) if sched[b] > 0]
 
 
@@ -407,54 +154,16 @@ def cashflow_pairs(peak_sales: float, dev_cost: float, ebit_margin: float,
                    erosion_rate: float = 0.15,
                    phases: list[tuple[float, float, float]] | None = None
                    ) -> list[tuple[float, float]]:
-    """Year-by-year unlevered free cash flow as (time in years, amount).
-
-    Times are continuous, so a compressed calendar can be expressed exactly
-    rather than rounded to whole periods.
-
-    ebit_margin is operating contribution BEFORE R&D amortisation, applied to
-    revenue in every commercial year (40% at peak in the base case: gross
-    margin of 58% less SG&A of 18%). It is not comparable to reported
-    segment EBIT or EBITDA margins.
-
-    Optional treatments:
-      working_capital : trade working capital as a share of revenue; the
-                        annual movement is a cash cost and the balance is
-                        released in the final commercial year.
-      tax_shield      : a multinational originator offsets development spend
-                        against profits elsewhere in the group, so the loss
-                        is usable immediately rather than carried forward.
-      expense_rd      : development spend is expensed as incurred instead of
-                        capitalised and amortised. The cash outflow is
-                        identical either way - only the timing of the tax
-                        deduction changes, and the tax shield only has value
-                        if there is profit elsewhere to offset it.
-      phase_costs     : explicit phase costs, overriding the default
-                        proportional scaling. Used to remove one phase
-                        without touching the others.
-      time_scale      : compresses the whole pre-launch calendar.
-      launch_offset   : the time at which the product launches, if earlier
-                        than the end of the development schedule.
-      scaleup         : the manufacturing scale-up cash amount.
-      nol_carryforward : carry forward losses and offset them against later
-                        profits. When false, a loss year simply shelters no
-                        tax and the loss is never used again.
-      plateau_years : years at full penetration before erosion begins.
-      phases        : override the phase calendar without changing the phase
-                      budgets.
-    """
+    """Year-by-year unlevered free cash flow as (time_in_years, amount_$m)
+    pairs. `ebit_margin` is operating contribution before R&D amortisation."""
     if phase_costs is None:
         phase_costs = scaled_phase_costs(dev_cost)
     amortisation = 0.0 if expense_rd else dev_cost / life
 
-    # Pre-launch development spend. This is the same cash in both treatments:
-    # the programme pays it either way.
     pre: list[tuple[float, float]] = []
     for t, amt in pre_launch_pairs(phase_costs, time_scale, phases):
         cf = -amt
         if tax_shield and expense_rd:
-            # Expensed as incurred and offset against group profits in the
-            # same period.
             cf += amt * tax
         pre.append((t, cf))
 
@@ -885,16 +594,7 @@ def main() -> None:
 
 
 def _rounded(obj, ndigits=10):
-    """Round every float in a results structure to a fixed precision.
-
-    The published JSON files are artefacts that reviewers may re-run and
-    compare byte-for-byte. Floating-point arithmetic is not bit-reproducible
-    across interpreter and library builds, so the last few digits of a
-    result can differ between two runs of the same code on the same
-    machine. Rounding at the point of serialisation removes that noise
-    without touching any value the model actually computes: at ten decimal
-    places these are dollar-million figures quoted to the cent.
-    """
+    """Round floats at serialisation so JSON outputs are byte-reproducible."""
     if isinstance(obj, dict):
         return {k: _rounded(v, ndigits) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
