@@ -303,19 +303,32 @@ FMC_WC = 0.724
 
 # Penetration by commercial year c: five years to full penetration, four
 # years at peak, then 15 percentage points of peak lost per year to zero.
-PENETRATION = [0.20, 0.36, 0.52, 0.68, 0.84, 1.00, 1.00, 1.00, 1.00,
-               0.85, 0.70, 0.55, 0.40, 0.25, 0.10, 0.00]
+def penetration(c: int, plateau_years: int = 4) -> float:
+    """Penetration factor for commercial year c.
 
+    A five-year ramp (0.20 rising to 0.84), then `plateau_years` at full
+    penetration, then 15 percentage points of peak lost per year, floored at
+    zero so revenue never books negative.
 
-def penetration(c: int) -> float:
-    """Penetration factor for commercial year c, extended past the schedule.
-
-    Floored at zero: past the end of the schedule the extrapolation would
-    otherwise go negative and book negative revenue.
+    plateau_years=4 reproduces the base case, whose commercial life is
+    fifteen years. A scenario with a longer commercial life needs a longer
+    plateau: with the erosion rule fixed, an eighteen-year life reached zero
+    revenue at year fifteen and left three of the eighteen years earning
+    nothing.
     """
-    if c < len(PENETRATION):
-        return PENETRATION[c]
-    return max(0.0, 1.0 - 0.15 * (c - 8))
+    ramp = (0.20, 0.36, 0.52, 0.68, 0.84)
+    if c < len(ramp):
+        return ramp[c]
+    peak_end = len(ramp) + plateau_years - 1
+    if c <= peak_end:
+        return 1.00
+    return max(0.0, 1.0 - 0.15 * (c - peak_end))
+
+
+# The base-case revenue path, derived from penetration() so the two cannot
+# drift apart. Fifteen commercial years: five ramping, four at peak, then
+# six years of erosion.
+PENETRATION = [penetration(c) for c in range(16)]
 
 
 # ------------------------------------------------------------------- costs
@@ -339,7 +352,9 @@ def phase_costs_without_registration(total: float) -> list[float]:
 
 
 def pre_launch_pairs(costs: list[float],
-                     time_scale: float = 1.0) -> list[tuple[float, float]]:
+                     time_scale: float = 1.0,
+                     phases: list[tuple[float, float, float]] | None = None
+                     ) -> list[tuple[float, float]]:
     """Pre-launch spend as (time in years, amount) pairs.
 
     Each phase's cost is spread across the calendar years it overlaps, in
@@ -351,14 +366,19 @@ def pre_launch_pairs(costs: list[float],
     is how the calendar counterfactual is built. Compressing moves spend
     EARLIER, which raises its present value - the model lets that happen
     rather than assuming compression is free.
+
+    `phases` overrides the phase calendar, keeping the phase budgets but
+    moving them in time. It is how a counterfactual that changes when the
+    registration work happens is built; the costs list stays in phase order.
     """
     # `costs` already holds the dollar amount for each phase, so no further
     # scaling is applied here. (An earlier version scaled twice and produced a
     # schedule that no longer summed to the amortised cost.)
-    horizon = DEV_YEARS * time_scale
+    active = PHASES if phases is None else phases
+    horizon = max(s + d for s, d, _ in active) * time_scale
     buckets = int(-(-horizon // 1))          # ceiling, so the tail is kept
     sched = [0.0] * buckets
-    for (start, dur, _), cost in zip(PHASES, costs):
+    for (start, dur, _), cost in zip(active, costs):
         s0 = start * time_scale
         d0 = dur * time_scale
         for b in range(buckets):
@@ -380,7 +400,10 @@ def cashflow_pairs(peak_sales: float, dev_cost: float, ebit_margin: float,
                    time_scale: float = 1.0,
                    launch_offset: float | None = None,
                    scaleup: float = SCALEUP,
-                   nol_carryforward: bool = True) -> list[tuple[float, float]]:
+                   nol_carryforward: bool = True,
+                   plateau_years: int = 4,
+                   phases: list[tuple[float, float, float]] | None = None
+                   ) -> list[tuple[float, float]]:
     """Year-by-year unlevered free cash flow as (time in years, amount).
 
     Times are continuous, so a compressed calendar can be expressed exactly
@@ -411,7 +434,11 @@ def cashflow_pairs(peak_sales: float, dev_cost: float, ebit_margin: float,
                         than the end of the development schedule.
       scaleup         : the manufacturing scale-up cash amount.
       nol_carryforward : carry forward losses and offset them against later
-                        profits.
+                        profits. When false, a loss year simply shelters no
+                        tax and the loss is never used again.
+      plateau_years : years at full penetration before erosion begins.
+      phases        : override the phase calendar without changing the phase
+                      budgets.
     """
     if phase_costs is None:
         phase_costs = scaled_phase_costs(dev_cost)
@@ -420,7 +447,7 @@ def cashflow_pairs(peak_sales: float, dev_cost: float, ebit_margin: float,
     # Pre-launch development spend. This is the same cash in both treatments:
     # the programme pays it either way.
     pre: list[tuple[float, float]] = []
-    for t, amt in pre_launch_pairs(phase_costs, time_scale):
+    for t, amt in pre_launch_pairs(phase_costs, time_scale, phases):
         cf = -amt
         if tax_shield and expense_rd:
             # Expensed as incurred and offset against group profits in the
@@ -434,7 +461,7 @@ def cashflow_pairs(peak_sales: float, dev_cost: float, ebit_margin: float,
     prev_wc = 0.0
     nol = 0.0
     for c in range(life):
-        revenue = peak_sales * penetration(c)
+        revenue = peak_sales * penetration(c, plateau_years)
         depreciation = scaleup / SCALEUP_LIFE if c < SCALEUP_LIFE else 0.0
         marketing = LAUNCH_MARKETING if c == 0 else 0.0
         stewardship = STEWARD / STEWARD_YEARS if c < STEWARD_YEARS else 0.0
@@ -445,7 +472,7 @@ def cashflow_pairs(peak_sales: float, dev_cost: float, ebit_margin: float,
         if tax_shield:
             # Losses usable immediately against group profits.
             taxable = ebit
-        else:
+        elif nol_carryforward:
             # Losses carried forward and offset against later profits.
             if ebit < 0:
                 nol += -ebit
@@ -454,6 +481,10 @@ def cashflow_pairs(peak_sales: float, dev_cost: float, ebit_margin: float,
                 used = min(nol, ebit)
                 nol -= used
                 taxable = ebit - used
+        else:
+            # No carry-forward: a loss year shelters no tax, and the loss is
+            # never used again.
+            taxable = max(0.0, ebit)
         tax_paid = taxable * tax
 
         nopat = ebit - tax_paid
@@ -566,17 +597,20 @@ SCENARIOS = {
                                   ebit_margin=0.25, tax=0.25, discount=0.14,
                                   life=10),
     "Blockbuster": dict(peak_sales=900.0, dev_cost=240.0, ebit_margin=0.52,
-                         tax=0.18, discount=0.11, life=18),
+                         tax=0.18, discount=0.11, life=18, plateau_years=7),
 }
 
 
 def evaluate(peak_sales: float, dev_cost: float, ebit_margin: float,
-             tax: float, discount: float, life: int) -> dict:
+             tax: float, discount: float, life: int,
+             plateau_years: int = 4) -> dict:
     """NPV and IRR for one scenario."""
-    pairs = cashflow_pairs(peak_sales, dev_cost, ebit_margin, tax, life)
+    pairs = cashflow_pairs(peak_sales, dev_cost, ebit_margin, tax, life,
+                           plateau_years=plateau_years)
     return {
         "peak_sales": peak_sales, "dev_cost": dev_cost,
         "ebit_margin": ebit_margin, "discount": discount, "life": life,
+        "plateau_years": plateau_years,
         "npv": npv_of(pairs, discount),
         "irr": irr_of(pairs),
     }

@@ -5,14 +5,18 @@ Regulation counterfactuals for the crop-protection NPV model.
 The question: does the hurdle a new active ingredient has to clear depend on
 the regulatory regime, or is it determined by the economics alone?
 
-Four structures are compared, all on the base-case parameters:
+Six structures are compared, all on the base-case parameters:
 
   baseline (as published)   the survey cost and timeline, unchanged
   free registration          the $35m registration dossier cost removed, at
                              the registration phase's own timing
   1995-speed calendar        the pre-launch calendar compressed to the
                              1995 lead time of 8.3 years
+  approval wait removed      the R&D programme and its costs unchanged, the
+                             launch brought forward, with the dossier
+                             prepared before the launch date
   both of those at once
+  both, plus the approval wait removed
 
 Two hurdles are reported for each, and they are different quantities:
 
@@ -138,14 +142,25 @@ REG_REMOVED = (m.scaled_phase_costs(COST)[m.REGISTRATION_PHASE_INDEX]
                - COSTS_NO_REG[m.REGISTRATION_PHASE_INDEX])
 
 # The approval-wait case: the R&D programme is untouched - same five phases,
-# same budgets, same dates - but the product launches when the dossier is
+# same budgets, same total - but the product launches when the dossier is
 # filed at the end of the field-trials and toxicology phase, instead of
 # waiting for the registration phase to run. Registration cost is still paid;
 # what is removed is the queue between dossier and authorisation. This is
 # the most generous version of the case, and it is an upper bound rather
 # than a forecast: no source measures the split between dossier preparation
 # and regulatory review inside the registration phase.
+#
+# For that to be coherent the dossier has to be PREPARED before it is
+# filed, so in this case the registration phase runs concurrently with the
+# final 1.5 years of the field-trials and toxicology phase (t=8.0 to 9.5)
+# rather than after it (t=9.5 to 11.0). The phase budget is unchanged; only
+# its timing moves. An earlier version of this script left the registration
+# phase where it was, which left $23.41m of registration spend falling after
+# the product had already launched. The assertion below now catches that.
 APPROVAL_WAIT_LAUNCH = 9.5
+
+PHASES_NO_APPROVAL_WAIT = list(m.PHASES)
+PHASES_NO_APPROVAL_WAIT[m.REGISTRATION_PHASE_INDEX] = (8.0, 1.5, 35.0)
 
 STRUCTURES = {
     "baseline (as published)": dict(
@@ -158,14 +173,16 @@ STRUCTURES = {
         launch_offset=None),
     "approval wait removed (R&D fixed)": dict(
         dev_cost=COST, phase_costs=None, time_scale=1.0,
-        launch_offset=APPROVAL_WAIT_LAUNCH),
+        launch_offset=APPROVAL_WAIT_LAUNCH,
+        phases=PHASES_NO_APPROVAL_WAIT),
     "both": dict(
         dev_cost=COST - REG_REMOVED, phase_costs=COSTS_NO_REG,
         time_scale=LEAD_SCALE, launch_offset=None),
     "both, plus approval wait removed": dict(
         dev_cost=COST - REG_REMOVED, phase_costs=COSTS_NO_REG,
         time_scale=LEAD_SCALE,
-        launch_offset=APPROVAL_WAIT_LAUNCH * LEAD_SCALE),
+        launch_offset=APPROVAL_WAIT_LAUNCH * LEAD_SCALE,
+        phases=PHASES_NO_APPROVAL_WAIT),
 }
 RATES = [0.085, 0.135, 0.15]
 
@@ -202,7 +219,8 @@ def cash_outflow(dev_cost, **kw):
     stewardship."""
     sched = sum(a for _, a in m.pre_launch_pairs(
         kw.get("phase_costs") or m.scaled_phase_costs(dev_cost),
-        kw.get("time_scale", 1.0)))
+        kw.get("time_scale", 1.0),
+        kw.get("phases")))
     return sched + m.LAUNCH_MARKETING + m.SCALEUP + m.STEWARD
 
 
@@ -242,7 +260,8 @@ print("=" * 86)
 for name, kw in STRUCTURES.items():
     alloc = sum(a for _, a in m.pre_launch_pairs(
         kw.get("phase_costs") or m.scaled_phase_costs(kw["dev_cost"]),
-        kw.get("time_scale", 1.0)))
+        kw.get("time_scale", 1.0),
+        kw.get("phases")))
     print(f"  {name:26s} allocated ${alloc:7.2f}m of ${kw['dev_cost']:7.2f}m"
           f"  -> dropped ${kw['dev_cost']-alloc:6.2f}m")
 
@@ -258,6 +277,25 @@ for name, kw in STRUCTURES.items():
 
 print()
 print("=" * 86)
+print("SANITY: does any pre-launch spend fall after the product launches?")
+print("=" * 86)
+for name, kw in STRUCTURES.items():
+    t_launch = first_revenue(kw["dev_cost"], **{k: v for k, v in kw.items()
+                                                if k not in ("dev_cost",)})
+    pre_pairs = m.pre_launch_pairs(
+        kw.get("phase_costs") or m.scaled_phase_costs(kw["dev_cost"]),
+        kw.get("time_scale", 1.0),
+        kw.get("phases"))
+    last_pre_t = max(t for t, _ in pre_pairs)
+    after = sum(a for t, a in pre_pairs if t >= t_launch - 1e-9)
+    assert last_pre_t <= t_launch + 1e-9, (
+        f"{name}: pre-launch spend at t={last_pre_t:.2f} occurs after launch "
+        f"at t={t_launch:.2f}")
+    print(f"  {name:26s} last pre-launch spend at t={last_pre_t:5.2f} "
+          f"(launch t={t_launch:5.2f})  ->  ${after:6.2f}m after launch")
+
+print()
+print("=" * 86)
 print("NPV = 0 HURDLE (peak sales required) - depends on the discount rate")
 print("=" * 86)
 print(f"{'structure':<28}" + "".join(f"{d:>10.1%}" for d in RATES)
@@ -268,7 +306,8 @@ for name, kw in STRUCTURES.items():
     for d in RATES:
         h = npv_hurdle(kw["dev_cost"], d, phase_costs=kw["phase_costs"],
                        time_scale=kw["time_scale"],
-                       launch_offset=kw["launch_offset"])
+                       launch_offset=kw["launch_offset"],
+                       phases=kw.get("phases"))
         row.append(h)
         results.setdefault(name, {})[f"npv_zero_at_{d:.3f}"] = h
     print(f"{name:<28}" + "".join(f"${h:>9,.0f}m" for h in row) +
@@ -281,7 +320,8 @@ print("=" * 86)
 for name, kw in STRUCTURES.items():
     h = irr_hurdle(kw["dev_cost"], phase_costs=kw["phase_costs"],
                    time_scale=kw["time_scale"],
-                   launch_offset=kw["launch_offset"])
+                   launch_offset=kw["launch_offset"],
+                   phases=kw.get("phases"))
     results.setdefault(name, {})["irr_15pct_hurdle"] = h
     print(f"  {name:28} ${h:>9,.0f}m    ({h/COHORT_MEAN:.1f}x the 2010 cohort 2022 revenue of $48.6m; "
           f"{h/IMPLIED_COHORT_PEAK:.1f}x its implied peak of ${IMPLIED_COHORT_PEAK:.1f}m)")

@@ -10,13 +10,26 @@
     "post_peak_erosion": 0.25,
     "separate_post_launch_cost_lines": false,
     "pre_launch_years": 10,
-    "pre_launch_spend_profile": "even"
+    "pre_launch_spend_profile": "even",
+    "loss_carryforward": false
   },
-  "decomposition": {
-    "timing_and_post_launch_costs_only": 671.2962587800234,
-    "margin_and_tax_only": 609.3107465131009,
-    "timing_and_cost_line_effect": 25.058880092092068,
-    "margin_and_tax_effect": 87.04439235901464
+  "waterfall": {
+    "step0_published_baseline": 595.7690903759226,
+    "step1_even_10yr_prelaunch": 572.3986675726671,
+    "step2_drop_post_launch_costs": 527.3190913554761,
+    "step3_erosion_15_to_25pct": 566.2247504068871,
+    "step4_commercial_life_15_to_10_yrs": 584.555744105478,
+    "step5_margin_40pct_to_35pct": 668.0637075491177,
+    "step6_tax_21pct_to_25pct": 696.3551388721146,
+    "step7_no_loss_carryforward": 696.3551388721146,
+    "delta_prelaunch_timing": -23.37042280325545,
+    "delta_drop_post_launch_costs": -45.07957621719106,
+    "delta_erosion": 38.90565905141102,
+    "delta_commercial_life": 18.330993698590873,
+    "delta_margin": 83.50796344363971,
+    "delta_tax": 28.291431322996914,
+    "delta_no_loss_carryforward": 0.0,
+    "total_spread": 100.586048496192
   },
   "cohort_mean": 48.6,
   "cohort_implied_peak": 121.5

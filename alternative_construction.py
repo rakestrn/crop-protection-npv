@@ -24,13 +24,21 @@ raises its present value.
 
 This version therefore does two things the earlier one did not:
 
-  1. It STATES the timing difference explicitly, and prints what it is worth.
+  1. It STATES the timing difference explicitly, and prices it.
 
-  2. It separates the changes into two groups and reports each on its own,
-     so a reader can see which assumption is doing the work:
-       - structural:  no separate post-launch cost lines, 10-year life,
-         25% erosion
-       - financial:    35% operating contribution, 25% tax
+  2. It reports the spread as an EXACT SEQUENTIAL WATERFALL: from the
+     published model's assumptions to this construction's, one assumption
+     group per rung, with each rung's delta summing exactly to the spread.
+     The first rung is asserted to reproduce the published model's hurdle
+     and the last to reproduce this construction's, so the waterfall cannot
+     silently drift away from either model it is describing.
+
+An earlier version of the decomposition was reported in two lines. Both
+labels were wrong: one line changed five assumptions at once while claiming
+to change two, and the other changed the margin alone while claiming to
+change the margin and the tax. A decomposition whose labels do not match
+what it does is worse than no decomposition, so the two-line version was
+replaced with the waterfall.
 
 The assumptions, all of which a reader might reasonably make and none of
 which is "the right answer":
@@ -41,16 +49,19 @@ which is "the right answer":
                            manufacturing scale-up and stewardship charged in
                            the commercial years, development spend amortised
                            over the commercial life, 40% operating
-                           contribution, 21% tax, 15-year life.
+                           contribution, 21% tax, 15-year life, losses
+                           carried forward and offset against later profits.
 
   this construction        the whole $307m treated as capitalised development
                            spend with NO separate post-launch cost lines,
                            amortised over a 10-year commercial life rather
                            than 15, 35% operating contribution rather than
-                           40%, 25% tax rather than 21%, and a steeper
+                           40%, 25% tax rather than 21%, a steeper
                            post-peak decline - revenue erodes at 25% of peak
                            a year rather than 15%, which is closer to what
-                           happens to a product once generics arrive.
+                           happens to a product once generics arrive - and no
+                           loss carry-forward, so an early commercial-year
+                           loss is never offset against later profits.
 
 Run it:
 
@@ -66,9 +77,8 @@ that either construction is the industry. A third construction would move the
 answer again, and a set of matched product-level observations would be worth
 more than any number of constructions.
 
-Because several assumptions change at once, the spread between the two
-constructions cannot by itself show which assumption matters most. That is why
-the decomposition above is reported separately.
+The waterfall below says which assumption is doing the work. It does not say
+which assumption is right.
 """
 import importlib.util
 import json
@@ -91,18 +101,34 @@ EROSION = 0.25            # post-peak decline, per year, as a fraction of peak
 
 # Pre-launch calendar. The published model runs an uneven eleven-year
 # programme; this construction spends the money evenly over ten years. The
-# difference is disclosed and priced below.
+# difference is disclosed and priced in the waterfall below.
 PRE_YEARS = 10
 
-# Peak sales are found by bisection on the IRR, so the revenue path can be
-# scaled without disturbing the model's own (unobserved) ramp shape.
-PENETRATION = [0.20, 0.36, 0.52, 0.68, 0.84, 1.00, 1.00, 1.00, 1.00, 0.75]
+# The published model's own assumptions, which the waterfall starts from.
+PUB_MARGIN = 0.40
+PUB_TAX = 0.21
+PUB_LIFE = 15
+PUB_EROSION = 0.15
+
+# The revenue shape, shared by both constructions so that the published
+# model's own path is reproduced exactly at 15% erosion: a five-year ramp,
+# four years at peak, then the erosion rate.
+RAMP = (0.20, 0.36, 0.52, 0.68, 0.84)
+PLATEAU_YEARS = 4
 
 
-def penetration(c: int) -> float:
-    if c < len(PENETRATION):
-        return PENETRATION[c]
-    return max(0.0, 1.0 - EROSION * (c - 8))
+def penetration(c: int, erosion: float) -> float:
+    """Penetration for commercial year c under a given erosion rate.
+
+    The published model's PENETRATION list is reproduced exactly at 15%
+    erosion, and this construction's own path exactly at 25%.
+    """
+    if c < len(RAMP):
+        return RAMP[c]
+    peak_end = len(RAMP) + PLATEAU_YEARS - 1
+    if c <= peak_end:
+        return 1.00
+    return max(0.0, 1.0 - erosion * (c - peak_end))
 
 
 def cashflows(peak_sales: float, margin: float = MARGIN, tax: float = TAX,
@@ -123,7 +149,7 @@ def cashflows(peak_sales: float, margin: float = MARGIN, tax: float = TAX,
     for _ in range(pre_years):
         cfs.append(-DEV_COST / pre_years)
     for c in range(life):
-        revenue = peak_sales * penetration(c)
+        revenue = peak_sales * penetration(c, EROSION)
         ebit = revenue * margin - amort
         if post_launch_costs:
             ebit -= (m.LAUNCH_MARKETING if c == 0 else 0.0)
@@ -164,10 +190,91 @@ def hurdle(target=HURDLE, **kw):
     return (lo + hi) / 2.0
 
 
+# --------------------------------------------------------------------------
+# The waterfall's own solver.
+#
+# One solver serves every rung, so each rung's delta is attributable to the
+# assumption that changed at that rung and to nothing else. It reproduces the
+# published model exactly at the published model's assumptions, and this
+# construction exactly at this construction's - both asserted in main().
+# --------------------------------------------------------------------------
+
+def bridge_cashflows(peak_sales: float, *, margin: float, tax: float,
+                     life: int, erosion: float,
+                     even_10yr_prelaunch: bool,
+                     post_launch_costs: bool,
+                     nol_carryforward: bool) -> list[tuple[float, float]]:
+    """Cash flows at one point in the waterfall, as (time, amount) pairs."""
+    amort = DEV_COST / life
+    nol = 0.0
+
+    if even_10yr_prelaunch:
+        # This construction's calendar: the whole programme spent evenly over
+        # ten years, then the commercial years.
+        pre = [(float(i), -DEV_COST / PRE_YEARS) for i in range(PRE_YEARS)]
+        launch_t = float(PRE_YEARS)
+    else:
+        # The published model's calendar: the eleven-year uneven phase
+        # schedule, taken from the published script so the two cannot drift.
+        pre = [(t, -amt)
+               for t, amt in m.pre_launch_pairs(m.scaled_phase_costs(DEV_COST))]
+        launch_t = float(m.DEV_YEARS)
+
+    comm = []
+    for c in range(life):
+        rev = peak_sales * penetration(c, erosion)
+        depr = (m.SCALEUP / m.SCALEUP_LIFE) if (post_launch_costs
+                                                and c < m.SCALEUP_LIFE) else 0.0
+        mkt = m.LAUNCH_MARKETING if (post_launch_costs and c == 0) else 0.0
+        stew = (m.STEWARD / m.STEWARD_YEARS) if (post_launch_costs
+                                                 and c < m.STEWARD_YEARS) else 0.0
+        ebit = rev * margin - amort - depr - mkt - stew
+
+        if nol_carryforward:
+            if ebit < 0:
+                nol += -ebit
+                taxable = 0.0
+            else:
+                used = min(nol, ebit)
+                nol -= used
+                taxable = ebit - used
+        else:
+            taxable = max(0.0, ebit)
+
+        fcf = (ebit - taxable * tax) + amort + depr
+        if post_launch_costs and c == 0:
+            fcf -= m.SCALEUP
+        comm.append((launch_t + c, fcf))
+    return pre + comm
+
+
+def bridge_hurdle(*, margin: float, tax: float, life: int, erosion: float,
+                  even_10yr_prelaunch: bool, post_launch_costs: bool,
+                  nol_carryforward: bool) -> float:
+    """Peak sales needed for a 15% IRR at one point in the waterfall."""
+    def cfs_at(peak_sales: float):
+        return bridge_cashflows(
+            peak_sales, margin=margin, tax=tax, life=life, erosion=erosion,
+            even_10yr_prelaunch=even_10yr_prelaunch,
+            post_launch_costs=post_launch_costs,
+            nol_carryforward=nol_carryforward)
+
+    lo, hi = 1.0, 30000.0
+    for _ in range(300):
+        mid = (lo + hi) / 2.0
+        r = m.irr_of(cfs_at(mid))
+        if r is None or r < HURDLE:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2.0
+
+
 if __name__ == "__main__":
     h = hurdle()
     # The published model's hurdle, for the spread.
-    published = m.breakeven_irr(m.HURDLE_IRR, 307.0, 0.40, 0.21, 15, 0.135)
+    published = m.breakeven_irr(m.HURDLE_IRR, 307.0, PUB_MARGIN, PUB_TAX,
+                                PUB_LIFE, 0.135)
 
     cohort_mean = 48.6
     implied_peak = cohort_mean / m.PENETRATION[12]
@@ -183,6 +290,7 @@ if __name__ == "__main__":
     print(f"  separate post-launch cost lines: none  (published model: $76m)")
     print(f"  pre-launch calendar       {PRE_YEARS} years, spent evenly"
           f"  (published model: 11 years, uneven)")
+    print(f"  loss carry-forward        none  (published model: yes)")
     print()
     print(f"  Peak sales for a {HURDLE:.0%} IRR")
     print(f"    this construction        ${h:,.0f}m")
@@ -196,22 +304,79 @@ if __name__ == "__main__":
     print(f"    this construction        {h/implied_peak:.1f}x")
     print(f"    published model          {published/implied_peak:.1f}x")
 
-    # Isolate the undisclosed timing change from the rest.
+    # ------------------------------------------------------- the waterfall
     print()
-    print("  Decomposition: what each group of changes is worth")
-    print("  (all against this construction, holding the others fixed)")
-    timing_only = hurdle(margin=0.40, tax=0.21, life=15,
-                         pre_years=m.DEV_YEARS, post_launch_costs=True)
-    print(f"    this construction, but with the published model's 11-year")
-    print(f"    calendar and post-launch cost lines:   ${timing_only:,.0f}m")
-    print(f"    -> the timing and cost-line changes alone are worth "
-          f"${h - timing_only:,.0f}m of the spread")
-    structural_only = hurdle(margin=0.40, tax=0.25, life=LIFE,
-                             pre_years=PRE_YEARS, post_launch_costs=False)
-    print(f"    this construction with only the financial changes "
-          f"(35% margin, 25% tax): ${structural_only:,.0f}m")
-    print(f"    -> the margin and tax changes alone are worth "
-          f"${h - structural_only:,.0f}m of the spread")
+    print("  Sequential waterfall: published model -> alternative construction")
+    print("  (one assumption group per rung; the deltas sum to the spread)")
+
+    s0 = bridge_hurdle(margin=PUB_MARGIN, tax=PUB_TAX, life=PUB_LIFE,
+                       erosion=PUB_EROSION, even_10yr_prelaunch=False,
+                       post_launch_costs=True, nol_carryforward=True)
+    s1 = bridge_hurdle(margin=PUB_MARGIN, tax=PUB_TAX, life=PUB_LIFE,
+                       erosion=PUB_EROSION, even_10yr_prelaunch=True,
+                       post_launch_costs=True, nol_carryforward=True)
+    s2 = bridge_hurdle(margin=PUB_MARGIN, tax=PUB_TAX, life=PUB_LIFE,
+                       erosion=PUB_EROSION, even_10yr_prelaunch=True,
+                       post_launch_costs=False, nol_carryforward=True)
+    s3 = bridge_hurdle(margin=PUB_MARGIN, tax=PUB_TAX, life=PUB_LIFE,
+                       erosion=EROSION, even_10yr_prelaunch=True,
+                       post_launch_costs=False, nol_carryforward=True)
+    s4 = bridge_hurdle(margin=PUB_MARGIN, tax=PUB_TAX, life=LIFE,
+                       erosion=EROSION, even_10yr_prelaunch=True,
+                       post_launch_costs=False, nol_carryforward=True)
+    s5 = bridge_hurdle(margin=MARGIN, tax=PUB_TAX, life=LIFE,
+                       erosion=EROSION, even_10yr_prelaunch=True,
+                       post_launch_costs=False, nol_carryforward=True)
+    s6 = bridge_hurdle(margin=MARGIN, tax=TAX, life=LIFE,
+                       erosion=EROSION, even_10yr_prelaunch=True,
+                       post_launch_costs=False, nol_carryforward=True)
+    s7 = bridge_hurdle(margin=MARGIN, tax=TAX, life=LIFE,
+                       erosion=EROSION, even_10yr_prelaunch=True,
+                       post_launch_costs=False, nol_carryforward=False)
+
+    assert abs(s0 - published) < 1e-4, f"Step 0 mismatch: {s0} vs {published}"
+    assert abs(s7 - h) < 1e-4, f"Step 7 mismatch: {s7} vs {h}"
+
+    waterfall = {
+        "step0_published_baseline": s0,
+        "step1_even_10yr_prelaunch": s1,
+        "step2_drop_post_launch_costs": s2,
+        "step3_erosion_15_to_25pct": s3,
+        "step4_commercial_life_15_to_10_yrs": s4,
+        "step5_margin_40pct_to_35pct": s5,
+        "step6_tax_21pct_to_25pct": s6,
+        "step7_no_loss_carryforward": s7,
+        "delta_prelaunch_timing": s1 - s0,
+        "delta_drop_post_launch_costs": s2 - s1,
+        "delta_erosion": s3 - s2,
+        "delta_commercial_life": s4 - s3,
+        "delta_margin": s5 - s4,
+        "delta_tax": s6 - s5,
+        "delta_no_loss_carryforward": s7 - s6,
+        "total_spread": s7 - s0,
+    }
+
+    print(f"  0. Published baseline                        ${s0:,.1f}m")
+    print(f"  1. + Even 10-yr pre-launch calendar          ${s1:,.1f}m"
+          f"  ({s1 - s0:+,.1f}m)")
+    print(f"  2. + No separate post-launch cost lines       ${s2:,.1f}m"
+          f"  ({s2 - s1:+,.1f}m)")
+    print(f"  3. + Erosion 15% -> 25% a year               ${s3:,.1f}m"
+          f"  ({s3 - s2:+,.1f}m)")
+    print(f"  4. + Commercial life 15 -> 10 years          ${s4:,.1f}m"
+          f"  ({s4 - s3:+,.1f}m)")
+    print(f"  5. + Operating contribution 40% -> 35%       ${s5:,.1f}m"
+          f"  ({s5 - s4:+,.1f}m)")
+    print(f"  6. + Tax 21% -> 25%                         ${s6:,.1f}m"
+          f"  ({s6 - s5:+,.1f}m)")
+    print(f"  7. + No loss carry-forward                 ${s7:,.1f}m"
+          f"  ({s7 - s6:+,.1f}m)")
+    print(f"  Total spread                                 {s7 - s0:+,.1f}m")
+    print()
+    print("  Each rung changes one assumption group and the deltas sum")
+    print("  exactly to the spread. Step 0 reproduces the published model")
+    print("  and step 7 reproduces this construction; both are asserted.")
+
     print()
     print("  The spread is the point. The hurdle is a scenario, not a")
     print("  measurement, and it moves with assumptions nobody can observe")
@@ -228,13 +393,9 @@ if __name__ == "__main__":
             "separate_post_launch_cost_lines": False,
             "pre_launch_years": PRE_YEARS,
             "pre_launch_spend_profile": "even",
+            "loss_carryforward": False,
         },
-        "decomposition": {
-            "timing_and_post_launch_costs_only": timing_only,
-            "margin_and_tax_only": structural_only,
-            "timing_and_cost_line_effect": h - timing_only,
-            "margin_and_tax_effect": h - structural_only,
-        },
+        "waterfall": waterfall,
         "cohort_mean": cohort_mean,
         "cohort_implied_peak": implied_peak,
     }

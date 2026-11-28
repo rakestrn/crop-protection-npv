@@ -6,6 +6,7 @@
       "ebit_margin": 0.4,
       "discount": 0.135,
       "life": 15,
+      "plateau_years": 4,
       "npv": -154.58072321184096,
       "irr": -0.026571237960095008
     },
@@ -15,6 +16,7 @@
       "ebit_margin": 0.25,
       "discount": 0.14,
       "life": 10,
+      "plateau_years": 4,
       "npv": -177.5463275619861,
       "irr": -0.019824631378548625
     },
@@ -24,8 +26,9 @@
       "ebit_margin": 0.52,
       "discount": 0.11,
       "life": 18,
-      "npv": 449.3717246397817,
-      "irr": 0.2441783931119575
+      "plateau_years": 7,
+      "npv": 547.6523609822626,
+      "irr": 0.25121597893881886
     }
   },
   "breakeven_npv_zero_peak_sales": 508.5082854160768,
